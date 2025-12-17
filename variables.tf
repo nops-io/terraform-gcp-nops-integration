@@ -32,6 +32,18 @@ variable "enable_bigquery_reservation_api" {
   default     = true
 }
 
+variable "enable_cloud_run_admin_api" {
+  description = "Enable Cloud Run Admin API in all projects"
+  type        = bool
+  default     = true
+}
+
+variable "enable_cloud_sql_admin_api" {
+  description = "Enable Cloud SQL Admin API in all projects"
+  type        = bool
+  default     = true
+}
+
 variable "target_gke_project_ids" {
   description = "List of specific project IDs where GKE APIs should be enabled. Used when enable_gke_apis_for_all_projects is false"
   type        = list(string)

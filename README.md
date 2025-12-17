@@ -13,6 +13,8 @@ This module enables the following APIs:
 | Recommender API | `recommender.googleapis.com` | All projects (scoped to billing account) |
 | Kubernetes Engine API | `container.googleapis.com` | All Target Customer Projects with GKE (⚠️ requires billing) |
 | BigQuery Reservation API | `bigqueryreservation.googleapis.com` | All projects (configurable) |
+| Cloud Run Admin API | `run.googleapis.com` | All projects (configurable) |
+| Cloud SQL Admin API | `sqladmin.googleapis.com` | All projects (configurable) |
 
 **Important:** The Kubernetes Engine API requires billing to be enabled on target projects, as it enables multiple paid services (Compute Engine, Container Registry, Artifact Registry, DNS, etc.).
 
@@ -95,10 +97,14 @@ module "enable_gcp_apis" {
   # - Recommender API (all projects)
   # - BigQuery Reservation API (all projects)
   # - Kubernetes Engine API (all projects by default)
+  # - Cloud Run Admin API (all projects)
+  # - Cloud SQL Admin API (all projects)
   
   # To customize, you can override defaults:
   # enable_cloud_asset_api = false
   # enable_bigquery_reservation_api = false
+  # enable_cloud_run_admin_api = false
+  # enable_cloud_sql_admin_api = false
   # enable_gke_apis_for_all_projects = false
   # target_gke_project_ids = ["project-1", "project-2"]
   
@@ -209,6 +215,8 @@ provider "google" {
 | `enable_cloud_billing_api` | Enable Cloud Billing API | `bool` | `true` | no |
 | `enable_recommender_api` | Enable Recommender API | `bool` | `true` | no |
 | `enable_bigquery_reservation_api` | Enable BigQuery Reservation API | `bool` | `true` | no |
+| `enable_cloud_run_admin_api` | Enable Cloud Run Admin API | `bool` | `true` | no |
+| `enable_cloud_sql_admin_api` | Enable Cloud SQL Admin API | `bool` | `true` | no |
 | `target_gke_project_ids` | List of project IDs for GKE API (GKE API is always enabled) | `list(string)` | `[]` | no |
 | `enable_gke_apis_for_all_projects` | Enable GKE APIs for all projects (GKE API is always enabled) | `bool` | `true` | no |
 | `auto_detect_gke_projects` | Auto-detect GKE projects | `bool` | `false` | no |

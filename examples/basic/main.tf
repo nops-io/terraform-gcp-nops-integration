@@ -32,10 +32,14 @@ module "enable_gcp_apis" {
   # - Recommender API (all projects)
   # - BigQuery Reservation API (all projects)
   # - Kubernetes Engine API (all projects by default)
+  # - Cloud Run Admin API (all projects)
+  # - Cloud SQL Admin API (all projects)
   
   # To customize, you can override defaults:
   # enable_cloud_asset_api = false
   # enable_bigquery_reservation_api = false
+  # enable_cloud_run_admin_api = false
+  # enable_cloud_sql_admin_api = false
   # enable_gke_apis_for_all_projects = false
   # target_gke_project_ids = ["gke-project-1", "gke-project-2"]
   

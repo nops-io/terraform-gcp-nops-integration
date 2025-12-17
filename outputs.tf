@@ -11,6 +11,8 @@ output "enabled_apis_summary" {
     recommender_api_enabled = var.enable_recommender_api ? [for project_id, project in local.all_projects : project_id] : []
     container_api_enabled = [for project_id, project in local.gke_projects : project_id]
     bigquery_reservation_api_enabled = var.enable_bigquery_reservation_api ? [for project_id, project in local.all_projects : project_id] : []
+    cloud_run_admin_api_enabled = var.enable_cloud_run_admin_api ? [for project_id, project in local.all_projects : project_id] : []
+    cloud_sql_admin_api_enabled = var.enable_cloud_sql_admin_api ? [for project_id, project in local.all_projects : project_id] : []
   }
 }
 

@@ -68,3 +68,15 @@ variable "disable_apis_on_destroy" {
   default     = false
 }
 
+variable "nops_service_account_email" {
+  description = "Email address of the nOps service account to grant required IAM roles. If not provided, IAM roles will not be granted"
+  type        = string
+  default     = ""
+}
+
+variable "grant_nops_iam_roles" {
+  description = "Whether to grant organization-level IAM roles to the nOps service account"
+  type        = bool
+  default     = true
+}
+

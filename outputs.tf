@@ -26,3 +26,17 @@ output "gke_projects_count" {
   value       = length(local.gke_projects)
 }
 
+output "nops_iam_roles_granted" {
+  description = "List of organization-level IAM roles granted to the nOps service account"
+  value = var.grant_nops_iam_roles && var.nops_service_account_email != "" ? [
+    "roles/cloudasset.viewer",
+    "roles/browser",
+    "roles/recommender.viewer",
+    "roles/logging.viewer",
+    "roles/compute.viewer",
+    "roles/container.viewer",
+    "roles/cloudsql.viewer",
+    "roles/run.viewer"
+  ] : []
+}
+

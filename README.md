@@ -136,6 +136,35 @@ module "enable_gcp_apis" {
 }
 ```
 
+### Example with nOps Service Account IAM Roles
+
+This module can automatically grant the required organization-level IAM roles to your nOps service account:
+
+```hcl
+module "enable_gcp_apis" {
+  source = "./nops-gcp-module"
+  
+  organization_id            = "123456789012"
+  central_ingestion_project_id = "central-ingestion-project"
+  
+  # Grant IAM roles to nOps service account
+  nops_service_account_email = "nops-sa@your-project.iam.gserviceaccount.com"
+  grant_nops_iam_roles       = true  # Set to false to skip IAM role granting
+}
+```
+
+The following organization-level roles will be granted to the nOps service account:
+- `roles/cloudasset.viewer` - To enumerate assets across services for correlation
+- `roles/browser` - To enumerate projects and folders
+- `roles/recommender.viewer` - To read cost recommendations (e.g., rightsizing, idle resources)
+- `roles/logging.viewer` - To read logs for resource analysis
+- `roles/compute.viewer` - To read Compute Engine data (CUDs, instances, regions)
+- `roles/container.viewer` - To read GKE cluster data
+- `roles/cloudsql.viewer` - To read Cloud SQL instances and configurations
+- `roles/run.viewer` - To read Cloud Run services and configurations
+
+**Note:** If `nops_service_account_email` is not provided or is an empty string, IAM roles will not be granted. Set `grant_nops_iam_roles = false` to disable IAM role granting even if a service account email is provided.
+
 ### Running with OpenTofu
 
 1. **Initialize OpenTofu**:
@@ -221,6 +250,8 @@ provider "google" {
 | `enable_gke_apis_for_all_projects` | Enable GKE APIs for all projects (GKE API is always enabled) | `bool` | `true` | no |
 | `auto_detect_gke_projects` | Auto-detect GKE projects | `bool` | `false` | no |
 | `disable_apis_on_destroy` | Disable APIs when destroyed | `bool` | `false` | no |
+| `nops_service_account_email` | Email address of the nOps service account to grant required IAM roles | `string` | `""` | no |
+| `grant_nops_iam_roles` | Whether to grant organization-level IAM roles to the nOps service account | `bool` | `true` | no |
 
 ## Outputs
 
@@ -230,6 +261,7 @@ provider "google" {
 | `enabled_apis_summary` | Summary of enabled APIs by project |
 | `total_projects` | Total number of projects in the organization |
 | `gke_projects_count` | Number of projects where GKE API will be enabled |
+| `nops_iam_roles_granted` | List of organization-level IAM roles granted to the nOps service account |
 
 ## Finding Your Organization ID
 
@@ -333,6 +365,7 @@ The service account or user running this module needs:
 - **Organization Level**:
   - `resourcemanager.organizations.get`
   - `resourcemanager.projects.list`
+  - `resourcemanager.organizationIamPolicies.set` (required if granting nOps IAM roles)
 
 - **Project Level** (for each project):
   - `serviceusage.services.enable`
@@ -340,8 +373,11 @@ The service account or user running this module needs:
   - `serviceusage.services.list`
 
 You can grant these permissions by assigning one of these roles:
-- `roles/serviceusage.serviceUsageAdmin` (recommended)
+- `roles/serviceusage.serviceUsageAdmin` (recommended for API enablement)
+- `roles/resourcemanager.organizationAdmin` (required for granting organization-level IAM roles)
 - `roles/owner` (full access)
+
+**Note:** If you're granting IAM roles to the nOps service account, you need organization-level IAM permissions (`roles/resourcemanager.organizationAdmin` or `roles/owner` at the organization level).
 
 ## Troubleshooting
 

@@ -43,6 +43,10 @@ module "enable_gcp_apis" {
   # enable_gke_apis_for_all_projects = false
   # target_gke_project_ids = ["gke-project-1", "gke-project-2"]
   
+  # Grant IAM roles to nOps service account
+  # nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
+  # grant_nops_iam_roles = true  # Set to false to skip IAM role granting
+  
   disable_apis_on_destroy = false
 }
 

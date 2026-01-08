@@ -1,26 +1,34 @@
-# GCP API Enablement Terraform Module
+# GCP nOps Integration Terraform Module
 
-This Terraform/OpenTofu module enables specific Google Cloud Platform APIs across all projects in an organization and grants organization-level IAM roles to the nOps service account. The module is organized into separate files for API enablement and IAM role management, allowing them to be used independently.
+This Terraform/OpenTofu module simplifies the integration of nOps with your GCP organization by automatically:
+- **Enabling all required GCP APIs** across your organization
+- **Granting organization-level IAM roles** to your nOps service account
+- **Granting billing account-level IAM roles** to your nOps service account
+
+With just 4 required variables, you can get up and running quickly. All APIs are always enabled, and all IAM roles are granted by default for the simplest possible experience.
 
 ## Module Structure
 
 The module code is organized into separate files:
 - **`apis.tf`** - Contains all GCP API enablement resources
 - **`organization_iam.tf`** - Contains all organization-level IAM role resources
+- **`billing_account_iam.tf`** - Contains all billing account-level IAM role resources
 - **`main.tf`** - Contains shared data sources and local values (Terraform configuration, organization projects data source)
 
 ## Overview
 
-This module enables the following APIs:
+This module automatically enables the following APIs across your organization:
 
 | API Service | API Service ID | Scope |
 |------------|----------------|-------|
 | Cloud Asset API | `cloudasset.googleapis.com` | Central Ingestion Project |
 | Cloud Billing API | `cloudbilling.googleapis.com` | Central Ingestion Project |
 | Recommender API | `recommender.googleapis.com` | All projects (scoped to billing account) |
-| BigQuery Reservation API | `bigqueryreservation.googleapis.com` | All projects (configurable) |
-| Cloud Run Admin API | `run.googleapis.com` | All projects (configurable) |
-| Cloud SQL Admin API | `sqladmin.googleapis.com` | All projects (configurable) |
+| BigQuery Reservation API | `bigqueryreservation.googleapis.com` | All projects |
+| Cloud Run Admin API | `run.googleapis.com` | All projects |
+| Cloud SQL Admin API | `sqladmin.googleapis.com` | All projects |
+
+**All APIs are always enabled** - no configuration needed. Simply provide your organization ID and central ingestion project ID.
 
 ## Prerequisites
 
@@ -61,9 +69,9 @@ This module enables the following APIs:
 
 ## Usage
 
-### Basic Example - Separate Module Invocations
+### Quick Start - Single Module Invocation
 
-This module separates API enablement and IAM role granting into distinct concerns. You can invoke them separately:
+The simplest way to use this module is with a single invocation that enables all APIs and grants all IAM roles:
 
 ```hcl
 terraform {
@@ -88,100 +96,76 @@ provider "google" {
   # export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account-key.json"
 }
 
-# Module invocation for enabling GCP APIs
-module "enable_gcp_apis" {
+# Simple module invocation - enables all APIs and grants all IAM roles
+# All APIs are automatically enabled:
+# - Cloud Asset API (Central Ingestion Project)
+# - Cloud Billing API (Central Ingestion Project)
+# - Recommender API (all projects)
+# - BigQuery Reservation API (all projects)
+# - Cloud Run Admin API (all projects)
+# - Cloud SQL Admin API (all projects)
+#
+# All IAM roles are automatically granted (defaults to true):
+# - Organization-level IAM roles (requires nops_service_account_email)
+# - Billing account-level IAM roles (requires nops_service_account_email and billing_account_id)
+module "nops_gcp_integration" {
   source = "./nops-gcp-module"  # or use git URL
   
-  organization_id            = "123456789012"  # Your GCP Organization ID
-  central_ingestion_project_id = "my-central-project-id"
+  # Required: Organization and project information
+  organization_id            = "123456789012"  # Replace with your GCP Organization ID
+  central_ingestion_project_id = "my-central-project-id"  # Replace with your central project ID
   
-  # All APIs are enabled by default:
-  # - Cloud Asset API (Central Ingestion Project)
-  # - Cloud Billing API (Central Ingestion Project)
-  # - Recommender API (all projects)
-  # - BigQuery Reservation API (all projects)
-  # - Cloud Run Admin API (all projects)
-  # - Cloud SQL Admin API (all projects)
-  
-  # To customize, you can override defaults:
-  # enable_cloud_asset_api = false
-  # enable_bigquery_reservation_api = false
-  # enable_cloud_run_admin_api = false
-  # enable_cloud_sql_admin_api = false
-  
-  # Disable IAM role granting for this module invocation (handled separately)
-  grant_nops_iam_roles = false
-  
-  disable_apis_on_destroy = false  # Set to true if you want APIs disabled when module is destroyed
-}
-
-# Module invocation for granting organization-level IAM roles
-module "grant_nops_iam_roles" {
-  source = "../.."  # Same module, different configuration
-  
-  organization_id = "123456789012"  # Must match the organization ID above
-  
-  # Central ingestion project ID is not required for IAM roles, but must be provided
-  central_ingestion_project_id = "my-central-project-id"
-  
-  # Disable all API enablement for this module invocation (only granting IAM roles)
-  enable_cloud_asset_api = false
-  enable_cloud_billing_api = false
-  enable_recommender_api = false
-  enable_bigquery_reservation_api = false
-  enable_cloud_run_admin_api = false
-  enable_cloud_sql_admin_api = false
-  
-  # Grant IAM roles to nOps service account
+  # Required: nOps service account information for IAM roles
   nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
-  grant_nops_iam_roles = true
+  billing_account_id = "XXXXXX-XXXXXX-XXXXXX"  # Replace with your Billing Account ID
   
-  disable_apis_on_destroy = false  # Not applicable when APIs are disabled
+  # Optional: All IAM roles are granted by default (set to false to disable)
+  # grant_nops_iam_roles = true         # Organization-level roles (default: true)
+  # grant_nops_billing_iam_roles = true # Billing account roles (default: true)
+  
+  # Optional: Disable APIs when module is destroyed (default: false)
+  # disable_apis_on_destroy = false
 }
 
-# Outputs for API enablement
+# Outputs
 output "api_enablement_summary" {
-  value = module.enable_gcp_apis.enabled_apis_summary
+  description = "Summary of enabled APIs by project"
+  value = module.nops_gcp_integration.enabled_apis_summary
 }
 
 output "total_projects" {
-  value = module.enable_gcp_apis.total_projects
+  description = "Total number of projects in the organization"
+  value = module.nops_gcp_integration.total_projects
 }
 
-# Outputs for IAM roles
 output "nops_iam_roles_granted" {
-  value = module.grant_nops_iam_roles.nops_iam_roles_granted
+  description = "List of organization-level IAM roles granted"
+  value = module.nops_gcp_integration.nops_iam_roles_granted
+}
+
+output "nops_billing_iam_roles_granted" {
+  description = "List of billing account-level IAM roles granted"
+  value = module.nops_gcp_integration.nops_billing_iam_roles_granted
 }
 ```
 
-### Single Module Invocation (All Features)
-
-Alternatively, you can use a single module invocation to enable both APIs and grant IAM roles:
-
-```hcl
-module "enable_gcp_apis_and_iam" {
-  source = "./nops-gcp-module"
-  
-  organization_id            = "123456789012"
-  central_ingestion_project_id = "central-ingestion-project"
-  
-  # Enable APIs (defaults shown)
-  enable_cloud_asset_api = true
-  enable_cloud_billing_api = true
-  enable_recommender_api = true
-  enable_bigquery_reservation_api = true
-  enable_cloud_run_admin_api = true
-  enable_cloud_sql_admin_api = true
-  
-  # Grant IAM roles to nOps service account
-  nops_service_account_email = "nops-sa@your-project.iam.gserviceaccount.com"
-  grant_nops_iam_roles       = true
-  
-  disable_apis_on_destroy = false
-}
+That's it! With just 4 required variables, this module will:
+- ✅ Enable all required GCP APIs across your organization
+- ✅ Grant organization-level IAM roles to your nOps service account
+- ✅ Grant billing account-level IAM roles to your nOps service account
 ```
 
-The following organization-level roles will be granted to the nOps service account:
+### What Gets Enabled and Granted
+
+**APIs Enabled (automatically, no configuration needed):**
+- Cloud Asset API (Central Ingestion Project)
+- Cloud Billing API (Central Ingestion Project)
+- Recommender API (all projects)
+- BigQuery Reservation API (all projects)
+- Cloud Run Admin API (all projects)
+- Cloud SQL Admin API (all projects)
+
+**Organization-Level IAM Roles Granted (automatically, default: true):**
 - `roles/cloudasset.viewer` - To enumerate assets across services for correlation
 - `roles/browser` - To enumerate projects and folders
 - `roles/recommender.viewer` - To read cost recommendations (e.g., rightsizing, idle resources)
@@ -191,10 +175,12 @@ The following organization-level roles will be granted to the nOps service accou
 - `roles/cloudsql.viewer` - To read Cloud SQL instances and configurations
 - `roles/run.viewer` - To read Cloud Run services and configurations
 
-**Note:** The module code is organized into separate files:
-- `apis.tf` - Contains all API enablement resources
-- `organization_iam.tf` - Contains all organization-level IAM role resources
-- `main.tf` - Contains shared data sources and local values
+**Billing Account-Level IAM Roles Granted (automatically, default: true):**
+- `roles/billing.viewer` - To view billing information for cost analysis
+
+### Advanced Usage - Separate Module Invocations
+
+For advanced use cases where you need more control, you can invoke the module multiple times with different configurations. See the [examples directory](examples/) for more details.
 
 ### Running with OpenTofu
 
@@ -271,15 +257,11 @@ provider "google" {
 |----------|-------------|------|---------|----------|
 | `organization_id` | GCP Organization ID | `string` | - | yes |
 | `central_ingestion_project_id` | Central Ingestion Project ID | `string` | - | yes |
-| `enable_cloud_asset_api` | Enable Cloud Asset API | `bool` | `true` | no |
-| `enable_cloud_billing_api` | Enable Cloud Billing API | `bool` | `true` | no |
-| `enable_recommender_api` | Enable Recommender API | `bool` | `true` | no |
-| `enable_bigquery_reservation_api` | Enable BigQuery Reservation API | `bool` | `true` | no |
-| `enable_cloud_run_admin_api` | Enable Cloud Run Admin API | `bool` | `true` | no |
-| `enable_cloud_sql_admin_api` | Enable Cloud SQL Admin API | `bool` | `true` | no |
 | `disable_apis_on_destroy` | Disable APIs when destroyed | `bool` | `false` | no |
 | `nops_service_account_email` | Email address of the nOps service account to grant required IAM roles | `string` | `""` | no |
 | `grant_nops_iam_roles` | Whether to grant organization-level IAM roles to the nOps service account | `bool` | `true` | no |
+| `billing_account_id` | The GCP Billing Account ID to grant billing viewer role. Required if grant_nops_billing_iam_roles is true | `string` | `""` | no |
+| `grant_nops_billing_iam_roles` | Whether to grant billing account-level IAM roles (billing.viewer) to the nOps service account | `bool` | `true` | no |
 
 ## Outputs
 
@@ -289,6 +271,7 @@ provider "google" {
 | `enabled_apis_summary` | Summary of enabled APIs by project |
 | `total_projects` | Total number of projects in the organization |
 | `nops_iam_roles_granted` | List of organization-level IAM roles granted to the nOps service account |
+| `nops_billing_iam_roles_granted` | List of billing account-level IAM roles granted to the nOps service account |
 
 ## Finding Your Organization ID
 
@@ -385,6 +368,41 @@ You would use:
 central_ingestion_project_id = "nops-central-hub-12345"
 ```
 
+## Finding Your Billing Account ID
+
+To find your GCP Billing Account ID:
+
+```bash
+gcloud billing accounts list
+```
+
+Example output:
+```
+ACCOUNT_ID            NAME                OPEN
+012345-6789AB-CDEF01  My Billing Account  True
+```
+
+The value you need is in the `ACCOUNT_ID` column (the first column), which typically has the format `XXXXXX-XXXXXX-XXXXXX`.
+
+Or via the GCP Console:
+1. Go to [GCP Console Billing](https://console.cloud.google.com/billing)
+2. Select your billing account
+3. The Billing Account ID is displayed at the top of the billing account details page
+4. Or check the URL: `https://console.cloud.google.com/billing/XXXXXX-XXXXXX-XXXXXX`
+
+### Example
+
+If your billing account details are:
+- **Billing Account Name**: "My Company Billing Account"
+- **Billing Account ID**: `012345-6789AB-CDEF01`
+
+You would use:
+```hcl
+billing_account_id = "012345-6789AB-CDEF01"
+```
+
+**Note:** The billing account ID is required if `grant_nops_billing_iam_roles` is set to `true`.
+
 ## Permissions Required
 
 The service account or user running this module needs:
@@ -392,7 +410,11 @@ The service account or user running this module needs:
 - **Organization Level**:
   - `resourcemanager.organizations.get`
   - `resourcemanager.projects.list`
-  - `resourcemanager.organizationIamPolicies.set` (required if granting nOps IAM roles)
+  - `resourcemanager.organizationIamPolicies.set` (required if granting organization-level IAM roles)
+
+- **Billing Account Level**:
+  - `billing.accounts.getIamPolicy` (required to read billing account IAM policy)
+  - `billing.accounts.setIamPolicy` (required if granting billing account-level IAM roles)
 
 - **Project Level** (for each project):
   - `serviceusage.services.enable`
@@ -402,9 +424,12 @@ The service account or user running this module needs:
 You can grant these permissions by assigning one of these roles:
 - `roles/serviceusage.serviceUsageAdmin` (recommended for API enablement)
 - `roles/resourcemanager.organizationAdmin` (required for granting organization-level IAM roles)
+- `roles/billing.admin` (required for granting billing account-level IAM roles)
 - `roles/owner` (full access)
 
-**Note:** If you're granting IAM roles to the nOps service account, you need organization-level IAM permissions (`roles/resourcemanager.organizationAdmin` or `roles/owner` at the organization level).
+**Note:** 
+- If you're granting organization-level IAM roles to the nOps service account, you need organization-level IAM permissions (`roles/resourcemanager.organizationAdmin` or `roles/owner` at the organization level).
+- If you're granting billing account-level IAM roles, you need billing account permissions (`roles/billing.admin` or `roles/owner` on the billing account).
 
 ## Troubleshooting
 

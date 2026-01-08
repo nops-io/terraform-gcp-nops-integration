@@ -44,24 +44,6 @@ variable "enable_cloud_sql_admin_api" {
   default     = true
 }
 
-variable "target_gke_project_ids" {
-  description = "List of specific project IDs where GKE APIs should be enabled. Used when enable_gke_apis_for_all_projects is false"
-  type        = list(string)
-  default     = []
-}
-
-variable "enable_gke_apis_for_all_projects" {
-  description = "If true, enable GKE APIs for all projects in the organization. If false, only enable for projects in target_gke_project_ids"
-  type        = bool
-  default     = true
-}
-
-variable "auto_detect_gke_projects" {
-  description = "Automatically detect projects with GKE enabled (requires additional permissions). If false, only use target_gke_project_ids"
-  type        = bool
-  default     = false
-}
-
 variable "disable_apis_on_destroy" {
   description = "Whether to disable APIs when the Terraform resource is destroyed"
   type        = bool

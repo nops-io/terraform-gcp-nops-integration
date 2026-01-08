@@ -11,19 +11,15 @@ This module enables the following APIs:
 | Cloud Asset API | `cloudasset.googleapis.com` | Central Ingestion Project |
 | Cloud Billing API | `cloudbilling.googleapis.com` | Central Ingestion Project |
 | Recommender API | `recommender.googleapis.com` | All projects (scoped to billing account) |
-| Kubernetes Engine API | `container.googleapis.com` | All Target Customer Projects with GKE (⚠️ requires billing) |
 | BigQuery Reservation API | `bigqueryreservation.googleapis.com` | All projects (configurable) |
 | Cloud Run Admin API | `run.googleapis.com` | All projects (configurable) |
 | Cloud SQL Admin API | `sqladmin.googleapis.com` | All projects (configurable) |
-
-**Important:** The Kubernetes Engine API requires billing to be enabled on target projects, as it enables multiple paid services (Compute Engine, Container Registry, Artifact Registry, DNS, etc.).
 
 ## Prerequisites
 
 - [OpenTofu](https://opentofu.org/) or [Terraform](https://www.terraform.io/) installed (>= 1.0)
 - **Billing must be enabled**:
   - **Central Ingestion Project**: Billing must be enabled for the central ingestion project
-  - **GKE Projects**: Billing must be enabled for all projects where the Kubernetes Engine API will be enabled. The GKE API requires billing as it enables paid services (Compute Engine, Container Registry, Artifact Registry, DNS, etc.)
   - **Other Projects**: Billing is recommended for all projects where APIs will be enabled
 - Google Cloud credentials with the following permissions:
   - `resourcemanager.projects.list` - to list all projects in the organization
@@ -96,7 +92,6 @@ module "enable_gcp_apis" {
   # - Cloud Billing API (Central Ingestion Project)
   # - Recommender API (all projects)
   # - BigQuery Reservation API (all projects)
-  # - Kubernetes Engine API (all projects by default)
   # - Cloud Run Admin API (all projects)
   # - Cloud SQL Admin API (all projects)
   
@@ -105,34 +100,8 @@ module "enable_gcp_apis" {
   # enable_bigquery_reservation_api = false
   # enable_cloud_run_admin_api = false
   # enable_cloud_sql_admin_api = false
-  # enable_gke_apis_for_all_projects = false
-  # target_gke_project_ids = ["project-1", "project-2"]
   
   disable_apis_on_destroy = false  # Set to true if you want APIs disabled when module is destroyed
-}
-```
-
-### Advanced Example with Specific GKE Projects
-
-```hcl
-module "enable_gcp_apis" {
-  source = "./nops-gcp-module"
-  
-  organization_id            = "123456789012"
-  central_ingestion_project_id = "central-ingestion-project"
-  
-  # Only enable specific APIs (GKE API is always enabled in target projects)
-  enable_cloud_asset_api   = true
-  enable_cloud_billing_api = true
-  enable_recommender_api   = true
-  
-  # GKE API is always enabled for specific projects listed below
-  enable_gke_apis_for_all_projects = false
-  target_gke_project_ids = [
-    "gke-project-1",
-    "gke-project-2",
-    "gke-project-3"
-  ]
 }
 ```
 
@@ -246,9 +215,6 @@ provider "google" {
 | `enable_bigquery_reservation_api` | Enable BigQuery Reservation API | `bool` | `true` | no |
 | `enable_cloud_run_admin_api` | Enable Cloud Run Admin API | `bool` | `true` | no |
 | `enable_cloud_sql_admin_api` | Enable Cloud SQL Admin API | `bool` | `true` | no |
-| `target_gke_project_ids` | List of project IDs for GKE API (GKE API is always enabled) | `list(string)` | `[]` | no |
-| `enable_gke_apis_for_all_projects` | Enable GKE APIs for all projects (GKE API is always enabled) | `bool` | `true` | no |
-| `auto_detect_gke_projects` | Auto-detect GKE projects | `bool` | `false` | no |
 | `disable_apis_on_destroy` | Disable APIs when destroyed | `bool` | `false` | no |
 | `nops_service_account_email` | Email address of the nOps service account to grant required IAM roles | `string` | `""` | no |
 | `grant_nops_iam_roles` | Whether to grant organization-level IAM roles to the nOps service account | `bool` | `true` | no |
@@ -260,7 +226,6 @@ provider "google" {
 | `central_ingestion_project_id` | The Central Ingestion Project ID |
 | `enabled_apis_summary` | Summary of enabled APIs by project |
 | `total_projects` | Total number of projects in the organization |
-| `gke_projects_count` | Number of projects where GKE API will be enabled |
 | `nops_iam_roles_granted` | List of organization-level IAM roles granted to the nOps service account |
 
 ## Finding Your Organization ID
@@ -397,38 +362,6 @@ Verify that:
 - Check that billing is enabled for the projects
 - Verify API enablement permissions
 - Some APIs may take a few minutes to fully enable
-
-### Error: "Billing account for project is not found"
-
-This error occurs when trying to enable the Kubernetes Engine API (`container.googleapis.com`) on a project without billing enabled. The GKE API requires billing because it enables multiple paid services including:
-- `container.googleapis.com` (Kubernetes Engine)
-- `compute.googleapis.com` (Compute Engine)
-- `artifactregistry.googleapis.com` (Artifact Registry)
-- `containerregistry.googleapis.com` (Container Registry)
-- `dns.googleapis.com` (Cloud DNS)
-
-**Solution:**
-1. Enable billing on the affected project(s):
-   ```bash
-   gcloud beta billing projects link PROJECT_ID --billing-account=BILLING_ACCOUNT_ID
-   ```
-   
-2. Or via GCP Console:
-   - Go to [GCP Console Billing](https://console.cloud.google.com/billing)
-   - Select your billing account
-   - Click "Link a project"
-   - Select the project that needs billing
-
-3. Verify billing is enabled:
-   ```bash
-   gcloud billing projects describe PROJECT_ID
-   ```
-
-4. If you don't want to enable GKE API for projects without billing, you can:
-   - Set `enable_gke_apis_for_all_projects = false` and specify only projects with billing in `target_gke_project_ids`
-   - Or exclude those projects from the module's scope
-
-**Note:** If you continue to see this error after enabling billing, wait a few minutes for the billing status to propagate, then run `tofu apply` again.
 
 ### OpenTofu vs Terraform
 

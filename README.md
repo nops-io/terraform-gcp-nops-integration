@@ -1,6 +1,13 @@
 # GCP API Enablement Terraform Module
 
-This Terraform/OpenTofu module enables specific Google Cloud Platform APIs across all projects in an organization based on different scoping requirements.
+This Terraform/OpenTofu module enables specific Google Cloud Platform APIs across all projects in an organization and grants organization-level IAM roles to the nOps service account. The module is organized into separate files for API enablement and IAM role management, allowing them to be used independently.
+
+## Module Structure
+
+The module code is organized into separate files:
+- **`apis.tf`** - Contains all GCP API enablement resources
+- **`organization_iam.tf`** - Contains all organization-level IAM role resources
+- **`main.tf`** - Contains shared data sources and local values (Terraform configuration, organization projects data source)
 
 ## Overview
 
@@ -54,9 +61,9 @@ This module enables the following APIs:
 
 ## Usage
 
-### Basic Example
+### Basic Example - Separate Module Invocations
 
-Create a `main.tf` file in your working directory:
+This module separates API enablement and IAM role granting into distinct concerns. You can invoke them separately:
 
 ```hcl
 terraform {
@@ -81,6 +88,7 @@ provider "google" {
   # export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account-key.json"
 }
 
+# Module invocation for enabling GCP APIs
 module "enable_gcp_apis" {
   source = "./nops-gcp-module"  # or use git URL
   
@@ -101,24 +109,75 @@ module "enable_gcp_apis" {
   # enable_cloud_run_admin_api = false
   # enable_cloud_sql_admin_api = false
   
+  # Disable IAM role granting for this module invocation (handled separately)
+  grant_nops_iam_roles = false
+  
   disable_apis_on_destroy = false  # Set to true if you want APIs disabled when module is destroyed
+}
+
+# Module invocation for granting organization-level IAM roles
+module "grant_nops_iam_roles" {
+  source = "../.."  # Same module, different configuration
+  
+  organization_id = "123456789012"  # Must match the organization ID above
+  
+  # Central ingestion project ID is not required for IAM roles, but must be provided
+  central_ingestion_project_id = "my-central-project-id"
+  
+  # Disable all API enablement for this module invocation (only granting IAM roles)
+  enable_cloud_asset_api = false
+  enable_cloud_billing_api = false
+  enable_recommender_api = false
+  enable_bigquery_reservation_api = false
+  enable_cloud_run_admin_api = false
+  enable_cloud_sql_admin_api = false
+  
+  # Grant IAM roles to nOps service account
+  nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
+  grant_nops_iam_roles = true
+  
+  disable_apis_on_destroy = false  # Not applicable when APIs are disabled
+}
+
+# Outputs for API enablement
+output "api_enablement_summary" {
+  value = module.enable_gcp_apis.enabled_apis_summary
+}
+
+output "total_projects" {
+  value = module.enable_gcp_apis.total_projects
+}
+
+# Outputs for IAM roles
+output "nops_iam_roles_granted" {
+  value = module.grant_nops_iam_roles.nops_iam_roles_granted
 }
 ```
 
-### Example with nOps Service Account IAM Roles
+### Single Module Invocation (All Features)
 
-This module can automatically grant the required organization-level IAM roles to your nOps service account:
+Alternatively, you can use a single module invocation to enable both APIs and grant IAM roles:
 
 ```hcl
-module "enable_gcp_apis" {
+module "enable_gcp_apis_and_iam" {
   source = "./nops-gcp-module"
   
   organization_id            = "123456789012"
   central_ingestion_project_id = "central-ingestion-project"
   
+  # Enable APIs (defaults shown)
+  enable_cloud_asset_api = true
+  enable_cloud_billing_api = true
+  enable_recommender_api = true
+  enable_bigquery_reservation_api = true
+  enable_cloud_run_admin_api = true
+  enable_cloud_sql_admin_api = true
+  
   # Grant IAM roles to nOps service account
   nops_service_account_email = "nops-sa@your-project.iam.gserviceaccount.com"
-  grant_nops_iam_roles       = true  # Set to false to skip IAM role granting
+  grant_nops_iam_roles       = true
+  
+  disable_apis_on_destroy = false
 }
 ```
 
@@ -132,7 +191,10 @@ The following organization-level roles will be granted to the nOps service accou
 - `roles/cloudsql.viewer` - To read Cloud SQL instances and configurations
 - `roles/run.viewer` - To read Cloud Run services and configurations
 
-**Note:** If `nops_service_account_email` is not provided or is an empty string, IAM roles will not be granted. Set `grant_nops_iam_roles = false` to disable IAM role granting even if a service account email is provided.
+**Note:** The module code is organized into separate files:
+- `apis.tf` - Contains all API enablement resources
+- `organization_iam.tf` - Contains all organization-level IAM role resources
+- `main.tf` - Contains shared data sources and local values
 
 ### Running with OpenTofu
 

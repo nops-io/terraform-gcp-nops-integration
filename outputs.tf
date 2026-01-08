@@ -1,3 +1,4 @@
+# API Enablement Outputs
 output "central_ingestion_project_id" {
   description = "The Central Ingestion Project ID"
   value       = var.central_ingestion_project_id
@@ -20,6 +21,7 @@ output "total_projects" {
   value       = length(local.all_projects)
 }
 
+# Organization IAM Outputs
 output "nops_iam_roles_granted" {
   description = "List of organization-level IAM roles granted to the nOps service account"
   value = var.grant_nops_iam_roles && var.nops_service_account_email != "" ? [

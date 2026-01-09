@@ -42,3 +42,11 @@ output "nops_billing_iam_roles_granted" {
   ] : []
 }
 
+# Project IAM Outputs
+output "nops_project_iam_roles_granted" {
+  description = "List of project-level IAM roles granted to the nOps service account on the billing exports project"
+  value = var.grant_nops_project_iam_roles && var.nops_service_account_email != "" && var.billing_export_project_id != "" ? [
+    "roles/serviceusage.serviceUsageConsumer"
+  ] : []
+}
+

@@ -21,6 +21,10 @@ All notable changes to this project will be documented in this file.
   - Grants billing.viewer role at billing account level
   - Configurable via `grant_nops_billing_iam_roles` variable (default: true)
   - Requires `billing_account_id` variable
+- Added project-level IAM role granting for nOps service account
+  - Grants serviceusage.serviceUsageConsumer role on billing exports project
+  - Configurable via `grant_nops_project_iam_roles` variable (default: true)
+  - Requires `billing_export_project_id` variable
 
 ### Changed
 - Required APIs are now always enabled (see Breaking Changes above)
@@ -33,6 +37,7 @@ All notable changes to this project will be documented in this file.
   - `apis.tf` - All GCP API enablement resources
   - `organization_iam.tf` - Organization-level IAM role resources
   - `billing_account_iam.tf` - Billing account-level IAM role resources
+  - `project_iam.tf` - Project-level IAM role resources
   - `main.tf` - Shared data sources and local values
 - Simplified module invocation - single module call enables everything by default
 - Updated examples to show simplest possible usage (4 required variables)

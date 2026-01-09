@@ -4,8 +4,9 @@ This Terraform/OpenTofu module simplifies the integration of nOps with your GCP 
 - **Enabling all required GCP APIs** across your organization
 - **Granting organization-level IAM roles** to your nOps service account
 - **Granting billing account-level IAM roles** to your nOps service account
+- **Granting project-level IAM roles** on your billing exports project
 
-With just 4 required variables, you can get up and running quickly. All APIs are always enabled, and all IAM roles are granted by default for the simplest possible experience.
+With just 5 required variables, you can get up and running quickly. All APIs are always enabled, and all IAM roles are granted by default for the simplest possible experience.
 
 ## Module Structure
 
@@ -13,6 +14,7 @@ The module code is organized into separate files:
 - **`apis.tf`** - Contains all GCP API enablement resources
 - **`organization_iam.tf`** - Contains all organization-level IAM role resources
 - **`billing_account_iam.tf`** - Contains all billing account-level IAM role resources
+- **`project_iam.tf`** - Contains all project-level IAM role resources
 - **`main.tf`** - Contains shared data sources and local values (Terraform configuration, organization projects data source)
 
 ## Overview
@@ -114,6 +116,7 @@ provider "google" {
 # All IAM roles are automatically granted (defaults to true):
 # - Organization-level IAM roles (requires nops_service_account_email)
 # - Billing account-level IAM roles (requires nops_service_account_email and billing_account_id)
+# - Project-level IAM roles (requires nops_service_account_email and billing_export_project_id)
 module "nops_gcp_integration" {
   source = "./nops-gcp-module"  # or use git URL
   
@@ -124,6 +127,7 @@ module "nops_gcp_integration" {
   # Required: nOps service account information for IAM roles
   nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
   billing_account_id = "XXXXXX-XXXXXX-XXXXXX"  # Replace with your Billing Account ID
+  billing_export_project_id = "your-billing-export-project"  # Replace with your billing export project ID
   
   # Optional: Enable BigQuery Reservation API (only if using flat-rate/reservation pricing)
   # enable_bigquery_reservation_api = false  # Default: false (most customers use on-demand pricing)
@@ -131,6 +135,7 @@ module "nops_gcp_integration" {
   # Optional: All IAM roles are granted by default (set to false to disable)
   # grant_nops_iam_roles = true         # Organization-level roles (default: true)
   # grant_nops_billing_iam_roles = true # Billing account roles (default: true)
+  # grant_nops_project_iam_roles = true # Project-level roles (default: true)
   
   # Optional: Disable APIs when module is destroyed (default: false)
   # disable_apis_on_destroy = false
@@ -156,12 +161,18 @@ output "nops_billing_iam_roles_granted" {
   description = "List of billing account-level IAM roles granted"
   value = module.nops_gcp_integration.nops_billing_iam_roles_granted
 }
+
+output "nops_project_iam_roles_granted" {
+  description = "List of project-level IAM roles granted on billing exports project"
+  value = module.nops_gcp_integration.nops_project_iam_roles_granted
+}
 ```
 
-That's it! With just 4 required variables, this module will:
+That's it! With just 5 required variables, this module will:
 - ✅ Enable all required GCP APIs across your organization
 - ✅ Grant organization-level IAM roles to your nOps service account
 - ✅ Grant billing account-level IAM roles to your nOps service account
+- ✅ Grant project-level IAM roles on your billing exports project
 ```
 
 ### What Gets Enabled and Granted
@@ -186,6 +197,9 @@ That's it! With just 4 required variables, this module will:
 
 **Billing Account-Level IAM Roles Granted (automatically, default: true):**
 - `roles/billing.viewer` - To view billing information for cost analysis
+
+**Project-Level IAM Roles Granted (automatically, default: true):**
+- `roles/serviceusage.serviceUsageConsumer` - To consume services on the billing exports project (required for billing export access)
 
 ### Advanced Usage - Separate Module Invocations
 
@@ -272,6 +286,8 @@ provider "google" {
 | `grant_nops_iam_roles` | Whether to grant organization-level IAM roles to the nOps service account | `bool` | `true` | no |
 | `billing_account_id` | The GCP Billing Account ID to grant billing viewer role. Required if grant_nops_billing_iam_roles is true | `string` | `""` | no |
 | `grant_nops_billing_iam_roles` | Whether to grant billing account-level IAM roles (billing.viewer) to the nOps service account | `bool` | `true` | no |
+| `billing_export_project_id` | The GCP Project ID that hosts billing exports. Required if grant_nops_project_iam_roles is true | `string` | `""` | no |
+| `grant_nops_project_iam_roles` | Whether to grant project-level IAM roles (Service Usage Consumer) to the nOps service account on the billing exports project | `bool` | `true` | no |
 
 ## Outputs
 
@@ -282,6 +298,7 @@ provider "google" {
 | `total_projects` | Total number of projects in the organization |
 | `nops_iam_roles_granted` | List of organization-level IAM roles granted to the nOps service account |
 | `nops_billing_iam_roles_granted` | List of billing account-level IAM roles granted to the nOps service account |
+| `nops_project_iam_roles_granted` | List of project-level IAM roles granted to the nOps service account on the billing exports project |
 
 ## Finding Your Organization ID
 
@@ -413,6 +430,47 @@ billing_account_id = "012345-6789AB-CDEF01"
 
 **Note:** The billing account ID is required if `grant_nops_billing_iam_roles` is set to `true`.
 
+## Finding Your Billing Export Project ID
+
+The `billing_export_project_id` is the GCP project ID where your billing exports are hosted. This is the project that contains your BigQuery dataset for billing export data.
+
+### How to Find Your Billing Export Project ID
+
+**Option 1: Using gcloud CLI**
+
+List all projects accessible to you:
+```bash
+gcloud projects list
+```
+
+**Option 2: Using GCP Console**
+
+1. Go to [GCP Console Billing](https://console.cloud.google.com/billing)
+2. Select your billing account
+3. Navigate to **Billing export** in the left menu
+4. The project ID hosting the billing export is shown in the export configuration
+5. Or check your BigQuery dataset - the project containing the billing export dataset is your billing export project
+
+**Option 3: Check BigQuery Dataset**
+
+If you know your billing export BigQuery dataset:
+```bash
+gcloud billing projects describe PROJECT_ID
+```
+
+### Example
+
+If your billing export project details are:
+- **Project Name**: "Billing Export Project"
+- **Project ID**: `billing-export-project-12345`
+
+You would use:
+```hcl
+billing_export_project_id = "billing-export-project-12345"
+```
+
+**Note:** The billing export project ID is required if `grant_nops_project_iam_roles` is set to `true`.
+
 ## Permissions Required
 
 The service account or user running this module needs:
@@ -427,19 +485,23 @@ The service account or user running this module needs:
   - `billing.accounts.setIamPolicy` (required if granting billing account-level IAM roles)
 
 - **Project Level** (for each project):
-  - `serviceusage.services.enable`
-  - `serviceusage.services.get`
-  - `serviceusage.services.list`
+  - `serviceusage.services.enable` (required for API enablement)
+  - `serviceusage.services.get` (required for API enablement)
+  - `serviceusage.services.list` (required for API enablement)
+  - `resourcemanager.projects.getIamPolicy` (required to read project IAM policy)
+  - `resourcemanager.projects.setIamPolicy` (required if granting project-level IAM roles)
 
 You can grant these permissions by assigning one of these roles:
 - `roles/serviceusage.serviceUsageAdmin` (recommended for API enablement)
 - `roles/resourcemanager.organizationAdmin` (required for granting organization-level IAM roles)
 - `roles/billing.admin` (required for granting billing account-level IAM roles)
+- `roles/resourcemanager.projectIamAdmin` (required for granting project-level IAM roles)
 - `roles/owner` (full access)
 
 **Note:** 
 - If you're granting organization-level IAM roles to the nOps service account, you need organization-level IAM permissions (`roles/resourcemanager.organizationAdmin` or `roles/owner` at the organization level).
 - If you're granting billing account-level IAM roles, you need billing account permissions (`roles/billing.admin` or `roles/owner` on the billing account).
+- If you're granting project-level IAM roles, you need project-level IAM permissions (`roles/resourcemanager.projectIamAdmin` or `roles/owner` on the billing export project).
 
 ## Troubleshooting
 

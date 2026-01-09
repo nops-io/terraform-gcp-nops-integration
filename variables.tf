@@ -44,3 +44,15 @@ variable "enable_bigquery_reservation_api" {
   default     = false
 }
 
+variable "billing_export_project_id" {
+  description = "The GCP Project ID that hosts billing exports. Required if grant_nops_project_iam_roles is true"
+  type        = string
+  default     = ""
+}
+
+variable "grant_nops_project_iam_roles" {
+  description = "Whether to grant project-level IAM roles (Service Usage Consumer) to the nOps service account on the billing exports project"
+  type        = bool
+  default     = true
+}
+

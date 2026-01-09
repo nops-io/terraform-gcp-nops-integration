@@ -21,10 +21,10 @@ provider "google" {
 }
 
 # Simple module invocation - enables all required APIs and grants all IAM roles
-# Required APIs are automatically enabled:
-# - Cloud Asset API (Central Ingestion Project)
-# - Cloud Billing API (Central Ingestion Project)
-# - Recommender API (all projects)
+# Required APIs are automatically enabled in the billing export project:
+# - Cloud Asset API
+# - Cloud Billing API
+# - Recommender API
 #
 # Optional APIs (disabled by default):
 # - BigQuery Reservation API (only if using flat-rate/reservation BigQuery pricing)
@@ -38,13 +38,12 @@ module "nops_gcp_integration" {
   source = "../.." # Adjust path based on your setup
 
   # Required: Organization and project information
-  organization_id              = "123456789012"          # Replace with your GCP Organization ID
-  central_ingestion_project_id = "my-central-project-id" # Replace with your central project ID
+  organization_id        = "123456789012"          # Replace with your GCP Organization ID
+  billing_export_project_id = "your-billing-export-project" # Replace with your billing export project ID
 
   # Required: nOps service account information for IAM roles
   nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
-  billing_account_id         = "XXXXXX-XXXXXX-XXXXXX"        # Replace with your Billing Account ID
-  billing_export_project_id  = "your-billing-export-project" # Replace with your billing export project ID
+  billing_account_id         = "XXXXXX-XXXXXX-XXXXXX" # Replace with your Billing Account ID
 
   # Optional: Enable BigQuery Reservation API (only if using flat-rate/reservation pricing)
   # enable_bigquery_reservation_api = false  # Default: false (most customers use on-demand pricing)
@@ -60,13 +59,13 @@ module "nops_gcp_integration" {
 
 # Outputs
 output "api_enablement_summary" {
-  description = "Summary of enabled APIs by project"
+  description = "Summary of enabled APIs in the billing export project"
   value       = module.nops_gcp_integration.enabled_apis_summary
 }
 
-output "total_projects" {
-  description = "Total number of projects in the organization"
-  value       = module.nops_gcp_integration.total_projects
+output "billing_export_project_id" {
+  description = "The billing export project ID where APIs are enabled"
+  value       = module.nops_gcp_integration.billing_export_project_id
 }
 
 output "nops_iam_roles_granted" {

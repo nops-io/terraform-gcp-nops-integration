@@ -1,10 +1,10 @@
 variable "organization_id" {
-  description = "The GCP Organization ID where projects are located. Required for API enablement and organization-level IAM roles"
+  description = "The GCP Organization ID where projects are located. Required for organization-level IAM roles"
   type        = string
 }
 
-variable "central_ingestion_project_id" {
-  description = "The project ID for the Central Ingestion Project where Cloud Asset and Cloud Billing APIs will be enabled. Required for API enablement"
+variable "billing_export_project_id" {
+  description = "The GCP Project ID that hosts billing exports. Required for API enablement and project-level IAM roles"
   type        = string
 }
 
@@ -39,15 +39,9 @@ variable "grant_nops_billing_iam_roles" {
 }
 
 variable "enable_bigquery_reservation_api" {
-  description = "Enable BigQuery Reservation API in all projects. Only required if using flat-rate or reservation-based BigQuery pricing (for capacity commitments). Most customers use on-demand pricing and can skip this."
+  description = "Enable BigQuery Reservation API in the billing export project. Only required if using flat-rate or reservation-based BigQuery pricing (for capacity commitments). Most customers use on-demand pricing and can skip this."
   type        = bool
   default     = false
-}
-
-variable "billing_export_project_id" {
-  description = "The GCP Project ID that hosts billing exports. Required if grant_nops_project_iam_roles is true"
-  type        = string
-  default     = ""
 }
 
 variable "grant_nops_project_iam_roles" {

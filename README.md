@@ -1,12 +1,12 @@
 # GCP nOps Integration Terraform Module
 
 This Terraform/OpenTofu module simplifies the integration of nOps with your GCP organization by automatically:
-- **Enabling all required GCP APIs** across your organization
+- **Enabling all required GCP APIs** in your billing export project
 - **Granting organization-level IAM roles** to your nOps service account
 - **Granting billing account-level IAM roles** to your nOps service account
 - **Granting project-level IAM roles** on your billing exports project
 
-With just 5 required variables, you can get up and running quickly. All APIs are always enabled, and all IAM roles are granted by default for the simplest possible experience.
+With just 4 required variables, you can get up and running quickly. All APIs are always enabled, and all IAM roles are granted by default for the simplest possible experience.
 
 ## Module Structure
 
@@ -15,19 +15,19 @@ The module code is organized into separate files:
 - **`organization_iam.tf`** - Contains all organization-level IAM role resources
 - **`billing_account_iam.tf`** - Contains all billing account-level IAM role resources
 - **`project_iam.tf`** - Contains all project-level IAM role resources
-- **`main.tf`** - Contains shared data sources and local values (Terraform configuration, organization projects data source)
+- **`main.tf`** - Contains shared Terraform configuration
 
 ## Overview
 
-This module automatically enables the following APIs across your organization:
+This module automatically enables the following APIs in your billing export project:
 
 **Required APIs (always enabled):**
 
 | API Service | API Service ID | Scope |
 |------------|----------------|-------|
-| Cloud Asset API | `cloudasset.googleapis.com` | Central Ingestion Project |
-| Cloud Billing API | `cloudbilling.googleapis.com` | Central Ingestion Project |
-| Recommender API | `recommender.googleapis.com` | All projects (scoped to billing account) |
+| Cloud Asset API | `cloudasset.googleapis.com` | Billing Export Project |
+| Cloud Billing API | `cloudbilling.googleapis.com` | Billing Export Project |
+| Recommender API | `recommender.googleapis.com` | Billing Export Project |
 
 **Optional APIs:**
 
@@ -40,14 +40,12 @@ This module automatically enables the following APIs across your organization:
 ## Prerequisites
 
 - [OpenTofu](https://opentofu.org/) or [Terraform](https://www.terraform.io/) installed (>= 1.0)
-- **Billing must be enabled**:
-  - **Central Ingestion Project**: Billing must be enabled for the central ingestion project
-  - **Other Projects**: Billing is recommended for all projects where APIs will be enabled
+- **Billing must be enabled** for the billing export project
 - Google Cloud credentials with the following permissions:
-  - `resourcemanager.projects.list` - to list all projects in the organization
-  - `serviceusage.services.enable` - to enable APIs
+  - `serviceusage.services.enable` - to enable APIs in the billing export project
   - `serviceusage.services.get` - to check API status
-  - Organization-level or project-level admin role
+  - Project-level admin role on the billing export project
+  - Organization-level admin role (for organization-level IAM roles)
 
 ## Installation
 
@@ -104,10 +102,10 @@ provider "google" {
 }
 
 # Simple module invocation - enables all required APIs and grants all IAM roles
-# Required APIs are automatically enabled:
-# - Cloud Asset API (Central Ingestion Project)
-# - Cloud Billing API (Central Ingestion Project)
-# - Recommender API (all projects)
+# Required APIs are automatically enabled in the billing export project:
+# - Cloud Asset API
+# - Cloud Billing API
+# - Recommender API
 #
 # Optional APIs (disabled by default):
 # - BigQuery Reservation API (only if using flat-rate/reservation BigQuery pricing)
@@ -121,13 +119,12 @@ module "nops_gcp_integration" {
   source = "./nops-gcp-module"  # or use git URL
   
   # Required: Organization and project information
-  organization_id            = "123456789012"  # Replace with your GCP Organization ID
-  central_ingestion_project_id = "my-central-project-id"  # Replace with your central project ID
+  organization_id        = "123456789012"  # Replace with your GCP Organization ID
+  billing_export_project_id = "your-billing-export-project"  # Replace with your billing export project ID
   
   # Required: nOps service account information for IAM roles
   nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
   billing_account_id = "XXXXXX-XXXXXX-XXXXXX"  # Replace with your Billing Account ID
-  billing_export_project_id = "your-billing-export-project"  # Replace with your billing export project ID
   
   # Optional: Enable BigQuery Reservation API (only if using flat-rate/reservation pricing)
   # enable_bigquery_reservation_api = false  # Default: false (most customers use on-demand pricing)
@@ -143,13 +140,13 @@ module "nops_gcp_integration" {
 
 # Outputs
 output "api_enablement_summary" {
-  description = "Summary of enabled APIs by project"
+  description = "Summary of enabled APIs in the billing export project"
   value = module.nops_gcp_integration.enabled_apis_summary
 }
 
-output "total_projects" {
-  description = "Total number of projects in the organization"
-  value = module.nops_gcp_integration.total_projects
+output "billing_export_project_id" {
+  description = "The billing export project ID where APIs are enabled"
+  value = module.nops_gcp_integration.billing_export_project_id
 }
 
 output "nops_iam_roles_granted" {
@@ -168,8 +165,8 @@ output "nops_project_iam_roles_granted" {
 }
 ```
 
-That's it! With just 5 required variables, this module will:
-- ✅ Enable all required GCP APIs across your organization
+That's it! With just 4 required variables, this module will:
+- ✅ Enable all required GCP APIs in your billing export project
 - ✅ Grant organization-level IAM roles to your nOps service account
 - ✅ Grant billing account-level IAM roles to your nOps service account
 - ✅ Grant project-level IAM roles on your billing exports project
@@ -178,9 +175,9 @@ That's it! With just 5 required variables, this module will:
 ### What Gets Enabled and Granted
 
 **Required APIs Enabled (automatically, no configuration needed):**
-- Cloud Asset API (Central Ingestion Project)
-- Cloud Billing API (Central Ingestion Project)
-- Recommender API (all projects)
+- Cloud Asset API (Billing Export Project)
+- Cloud Billing API (Billing Export Project)
+- Recommender API (Billing Export Project)
 
 **Optional APIs:**
 - BigQuery Reservation API (disabled by default) - Only enable if using flat-rate or reservation-based BigQuery pricing (for capacity commitments). Most customers use on-demand pricing and can skip this.
@@ -278,24 +275,22 @@ provider "google" {
 
 | Variable | Description | Type | Default | Required |
 |----------|-------------|------|---------|----------|
-| `organization_id` | GCP Organization ID | `string` | - | yes |
-| `central_ingestion_project_id` | Central Ingestion Project ID | `string` | - | yes |
+| `organization_id` | GCP Organization ID. Required for organization-level IAM roles | `string` | - | yes |
+| `billing_export_project_id` | The GCP Project ID that hosts billing exports. Required for API enablement and project-level IAM roles | `string` | - | yes |
 | `disable_apis_on_destroy` | Disable APIs when destroyed | `bool` | `false` | no |
-| `enable_bigquery_reservation_api` | Enable BigQuery Reservation API. Only required if using flat-rate or reservation-based BigQuery pricing (for capacity commitments). Most customers use on-demand pricing and can skip this. | `bool` | `false` | no |
+| `enable_bigquery_reservation_api` | Enable BigQuery Reservation API in the billing export project. Only required if using flat-rate or reservation-based BigQuery pricing (for capacity commitments). Most customers use on-demand pricing and can skip this. | `bool` | `false` | no |
 | `nops_service_account_email` | Email address of the nOps service account to grant required IAM roles | `string` | `""` | no |
 | `grant_nops_iam_roles` | Whether to grant organization-level IAM roles to the nOps service account | `bool` | `true` | no |
 | `billing_account_id` | The GCP Billing Account ID to grant billing viewer role. Required if grant_nops_billing_iam_roles is true | `string` | `""` | no |
 | `grant_nops_billing_iam_roles` | Whether to grant billing account-level IAM roles (billing.viewer) to the nOps service account | `bool` | `true` | no |
-| `billing_export_project_id` | The GCP Project ID that hosts billing exports. Required if grant_nops_project_iam_roles is true | `string` | `""` | no |
 | `grant_nops_project_iam_roles` | Whether to grant project-level IAM roles (Service Usage Consumer) to the nOps service account on the billing exports project | `bool` | `true` | no |
 
 ## Outputs
 
 | Output | Description |
 |--------|-------------|
-| `central_ingestion_project_id` | The Central Ingestion Project ID |
-| `enabled_apis_summary` | Summary of enabled APIs by project |
-| `total_projects` | Total number of projects in the organization |
+| `billing_export_project_id` | The Billing Export Project ID where APIs are enabled |
+| `enabled_apis_summary` | Summary of enabled APIs in the billing export project |
 | `nops_iam_roles_granted` | List of organization-level IAM roles granted to the nOps service account |
 | `nops_billing_iam_roles_granted` | List of billing account-level IAM roles granted to the nOps service account |
 | `nops_project_iam_roles_granted` | List of project-level IAM roles granted to the nOps service account on the billing exports project |
@@ -313,20 +308,21 @@ Or via the GCP Console:
 2. Select your organization
 3. The Organization ID is shown in the URL or organization details
 
-## Finding Your Central Ingestion Project ID
+## Finding Your Billing Export Project ID
 
-The `central_ingestion_project_id` is the GCP project ID where the Cloud Asset API and Cloud Billing API will be enabled. This should be a central/hub project that aggregates asset and billing data from other projects in your organization.
+The `billing_export_project_id` is the GCP project ID where your billing exports are hosted. This is the project that contains your BigQuery dataset for billing export data. All required APIs will be enabled in this project.
 
-### What is a Central Ingestion Project?
+### What is a Billing Export Project?
 
-A Central Ingestion Project is a dedicated GCP project that acts as a hub for:
-- Collecting asset inventory data from all projects in your organization (via Cloud Asset API)
-- Accessing billing information across your organization (via Cloud Billing API)
+A Billing Export Project is the GCP project that hosts your billing export data. This project:
+- Contains your BigQuery dataset for billing export data
+- Is where all required APIs (Cloud Asset, Cloud Billing, Recommender) will be enabled
+- Must have billing enabled
 
 This project should be:
 - An existing project in your organization (this module does not create projects)
 - A project you have administrative access to
-- A project where you want centralized asset and billing data collection
+- The project where your billing exports are configured
 
 ### How to Find Your Project ID
 
@@ -386,13 +382,13 @@ gcloud projects describe PROJECT_NUMBER --format="value(projectId)"
 ### Example
 
 If your project details are:
-- **Project Name**: "nOps Central Hub"
-- **Project ID**: `nops-central-hub-12345`
+- **Project Name**: "Billing Export Project"
+- **Project ID**: `billing-export-project-12345`
 - **Project Number**: `123456789012`
 
 You would use:
 ```hcl
-central_ingestion_project_id = "nops-central-hub-12345"
+billing_export_project_id = "billing-export-project-12345"
 ```
 
 ## Finding Your Billing Account ID
@@ -484,7 +480,7 @@ The service account or user running this module needs:
   - `billing.accounts.getIamPolicy` (required to read billing account IAM policy)
   - `billing.accounts.setIamPolicy` (required if granting billing account-level IAM roles)
 
-- **Project Level** (for each project):
+- **Project Level** (for the billing export project):
   - `serviceusage.services.enable` (required for API enablement)
   - `serviceusage.services.get` (required for API enablement)
   - `serviceusage.services.list` (required for API enablement)
@@ -513,8 +509,8 @@ Ensure your credentials have the required permissions listed above.
 
 Verify that:
 - The `organization_id` is correct
-- The `central_ingestion_project_id` exists and is accessible
-- Your credentials have access to the organization
+- The `billing_export_project_id` exists and is accessible
+- Your credentials have access to the organization and the billing export project
 
 ### APIs not enabling
 
@@ -534,7 +530,6 @@ terraform apply
 
 ## Limitations
 
-- The module uses `google_projects` data source which may have rate limits for large organizations
 - API enablement is asynchronous; the module will wait for enablement to complete
 
 ## Support

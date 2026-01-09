@@ -1,22 +1,17 @@
 # API Enablement Outputs
-output "central_ingestion_project_id" {
-  description = "The Central Ingestion Project ID"
-  value       = var.central_ingestion_project_id
+output "billing_export_project_id" {
+  description = "The Billing Export Project ID where APIs are enabled"
+  value       = var.billing_export_project_id
 }
 
 output "enabled_apis_summary" {
-  description = "Summary of enabled APIs by project"
+  description = "Summary of enabled APIs in the billing export project"
   value = {
-    cloud_asset_api_enabled = [var.central_ingestion_project_id]
-    cloud_billing_api_enabled = [var.central_ingestion_project_id]
-    recommender_api_enabled = [for project_id, project in local.all_projects : project_id]
-    bigquery_reservation_api_enabled = var.enable_bigquery_reservation_api ? [for project_id, project in local.all_projects : project_id] : []
+    cloud_asset_api_enabled          = [var.billing_export_project_id]
+    cloud_billing_api_enabled        = [var.billing_export_project_id]
+    recommender_api_enabled          = [var.billing_export_project_id]
+    bigquery_reservation_api_enabled = var.enable_bigquery_reservation_api ? [var.billing_export_project_id] : []
   }
-}
-
-output "total_projects" {
-  description = "Total number of projects in the organization"
-  value       = length(local.all_projects)
 }
 
 # Organization IAM Outputs

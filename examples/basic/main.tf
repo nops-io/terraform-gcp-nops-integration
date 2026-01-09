@@ -34,16 +34,22 @@ provider "google" {
 # - Organization-level IAM roles (requires nops_service_account_email)
 # - Billing account-level IAM roles (requires nops_service_account_email and billing_account_id)
 # - Project-level IAM roles (requires nops_service_account_email and billing_export_project_id)
+# - BigQuery dataset-level IAM roles (requires nops_service_account_email and BigQuery dataset IDs)
 module "nops_gcp_integration" {
   source = "../.." # Adjust path based on your setup
 
   # Required: Organization and project information
-  organization_id        = "123456789012"          # Replace with your GCP Organization ID
+  organization_id           = "123456789012"                # Replace with your GCP Organization ID
   billing_export_project_id = "your-billing-export-project" # Replace with your billing export project ID
 
   # Required: nOps service account information for IAM roles
   nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
   billing_account_id         = "XXXXXX-XXXXXX-XXXXXX" # Replace with your Billing Account ID
+
+  # Required: BigQuery dataset IDs for billing exports
+  bigquery_detailed_usage_cost_dataset_id     = "your-project:detailed_usage_cost_dataset"     # Replace with your Detailed Usage Cost dataset ID
+  bigquery_pricing_dataset_id                 = "your-project:pricing_dataset"                 # Replace with your Pricing Export dataset ID
+  bigquery_committed_use_discounts_dataset_id = "your-project:committed_use_discounts_dataset" # Replace with your Committed Use Discounts dataset ID
 
   # Optional: Enable BigQuery Reservation API (only if using flat-rate/reservation pricing)
   # enable_bigquery_reservation_api = false  # Default: false (most customers use on-demand pricing)
@@ -52,6 +58,7 @@ module "nops_gcp_integration" {
   # grant_nops_iam_roles = true         # Organization-level roles (default: true)
   # grant_nops_billing_iam_roles = true # Billing account roles (default: true)
   # grant_nops_project_iam_roles = true # Project-level roles (default: true)
+  # grant_nops_bigquery_dataset_iam_roles = true # BigQuery dataset roles (default: true)
 
   # Optional: Disable APIs when module is destroyed (default: false)
   # disable_apis_on_destroy = false
@@ -81,5 +88,10 @@ output "nops_billing_iam_roles_granted" {
 output "nops_project_iam_roles_granted" {
   description = "List of project-level IAM roles granted on billing exports project"
   value       = module.nops_gcp_integration.nops_project_iam_roles_granted
+}
+
+output "nops_bigquery_dataset_iam_roles_granted" {
+  description = "List of BigQuery dataset-level IAM roles granted on billing export datasets"
+  value       = module.nops_gcp_integration.nops_bigquery_dataset_iam_roles_granted
 }
 

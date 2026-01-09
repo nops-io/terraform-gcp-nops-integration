@@ -45,3 +45,13 @@ output "nops_project_iam_roles_granted" {
   ] : []
 }
 
+# BigQuery Dataset IAM Outputs
+output "nops_bigquery_dataset_iam_roles_granted" {
+  description = "List of BigQuery dataset-level IAM roles granted to the nOps service account on billing export datasets"
+  value = var.grant_nops_bigquery_dataset_iam_roles && var.nops_service_account_email != "" ? concat(
+    var.bigquery_detailed_usage_cost_dataset_id != "" ? ["roles/bigquery.dataViewer on ${var.bigquery_detailed_usage_cost_dataset_id}"] : [],
+    var.bigquery_pricing_dataset_id != "" ? ["roles/bigquery.dataViewer on ${var.bigquery_pricing_dataset_id}"] : [],
+    var.bigquery_committed_use_discounts_dataset_id != "" ? ["roles/bigquery.dataViewer on ${var.bigquery_committed_use_discounts_dataset_id}"] : []
+  ) : []
+}
+

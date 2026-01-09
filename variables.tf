@@ -50,3 +50,27 @@ variable "grant_nops_project_iam_roles" {
   default     = true
 }
 
+variable "bigquery_detailed_usage_cost_dataset_id" {
+  description = "The BigQuery Dataset ID for Detailed Usage Cost export. Format: project_id:dataset_id or dataset_id (if in billing export project). Required if grant_nops_bigquery_dataset_iam_roles is true"
+  type        = string
+  default     = ""
+}
+
+variable "bigquery_pricing_dataset_id" {
+  description = "The BigQuery Dataset ID for Pricing Export. Format: project_id:dataset_id or dataset_id (if in billing export project). Required if grant_nops_bigquery_dataset_iam_roles is true"
+  type        = string
+  default     = ""
+}
+
+variable "bigquery_committed_use_discounts_dataset_id" {
+  description = "The BigQuery Dataset ID for Committed Use Discounts Export. Format: project_id:dataset_id or dataset_id (if in billing export project). Required if grant_nops_bigquery_dataset_iam_roles is true"
+  type        = string
+  default     = ""
+}
+
+variable "grant_nops_bigquery_dataset_iam_roles" {
+  description = "Whether to grant BigQuery dataset-level IAM roles (bigquery.dataViewer) to the nOps service account on billing export datasets"
+  type        = bool
+  default     = true
+}
+

@@ -29,6 +29,10 @@ All notable changes to this project will be documented in this file.
   - Grants serviceusage.serviceUsageConsumer role on billing exports project
   - Configurable via `grant_nops_project_iam_roles` variable (default: true)
   - Requires `billing_export_project_id` variable
+- Added BigQuery dataset-level IAM role granting for nOps service account
+  - Grants bigquery.dataViewer role on three billing export datasets: Detailed Usage Cost, Pricing, and Committed Use Discounts
+  - Configurable via `grant_nops_bigquery_dataset_iam_roles` variable (default: true)
+  - Requires `bigquery_detailed_usage_cost_dataset_id`, `bigquery_pricing_dataset_id`, and `bigquery_committed_use_discounts_dataset_id` variables
 
 ### Changed
 - Required APIs are now always enabled (see Breaking Changes above)

@@ -10,7 +10,7 @@ output "enabled_apis_summary" {
     cloud_asset_api_enabled = [var.central_ingestion_project_id]
     cloud_billing_api_enabled = [var.central_ingestion_project_id]
     recommender_api_enabled = [for project_id, project in local.all_projects : project_id]
-    bigquery_reservation_api_enabled = [for project_id, project in local.all_projects : project_id]
+    bigquery_reservation_api_enabled = var.enable_bigquery_reservation_api ? [for project_id, project in local.all_projects : project_id] : []
   }
 }
 

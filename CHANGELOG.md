@@ -8,7 +8,8 @@ All notable changes to this project will be documented in this file.
 
 **IMPORTANT**: This version contains breaking changes. Please review the following changes before upgrading:
 
-- **Removed all `enable_*_api` variables** - All APIs are now always enabled. Remove any `enable_cloud_asset_api`, `enable_cloud_billing_api`, `enable_recommender_api`, `enable_bigquery_reservation_api` variables from your configuration.
+- **Removed all `enable_*_api` variables** - Required APIs are now always enabled. Remove any `enable_cloud_asset_api`, `enable_cloud_billing_api`, `enable_recommender_api` variables from your configuration.
+- **BigQuery Reservation API is now optional** - The BigQuery Reservation API is now disabled by default. Add `enable_bigquery_reservation_api = true` if you use flat-rate or reservation-based BigQuery pricing.
 - **Removed GKE API enablement** - Kubernetes Engine API enablement has been removed. Remove `target_gke_project_ids`, `enable_gke_apis_for_all_projects`, and `auto_detect_gke_projects` variables.
 - **Made `organization_id` and `central_ingestion_project_id` required** - These variables no longer have empty defaults and must be provided.
 
@@ -22,8 +23,12 @@ All notable changes to this project will be documented in this file.
   - Requires `billing_account_id` variable
 
 ### Changed
-- All APIs are now always enabled (see Breaking Changes above)
-  - Cloud Asset API, Cloud Billing API, Recommender API, and BigQuery Reservation API are always enabled
+- Required APIs are now always enabled (see Breaking Changes above)
+  - Cloud Asset API, Cloud Billing API, and Recommender API are always enabled
+- BigQuery Reservation API is now optional and disabled by default
+  - Only enable if using flat-rate or reservation-based BigQuery pricing (for capacity commitments)
+  - Most customers use on-demand pricing and can skip this
+  - Controlled via `enable_bigquery_reservation_api` variable (default: false)
 - Separated code into organized files:
   - `apis.tf` - All GCP API enablement resources
   - `organization_iam.tf` - Organization-level IAM role resources
@@ -34,7 +39,8 @@ All notable changes to this project will be documented in this file.
 - Updated README to emphasize simplicity and ease of use
 
 ### Removed
-- Removed `enable_cloud_asset_api`, `enable_cloud_billing_api`, `enable_recommender_api`, `enable_bigquery_reservation_api`, `enable_cloud_run_admin_api`, `enable_cloud_sql_admin_api` variables
+- Removed `enable_cloud_asset_api`, `enable_cloud_billing_api`, `enable_recommender_api`, `enable_cloud_run_admin_api`, `enable_cloud_sql_admin_api` variables
+- Note: `enable_bigquery_reservation_api` variable was added (default: false) to make BigQuery Reservation API optional
 - Removed `target_gke_project_ids`, `enable_gke_apis_for_all_projects`, `auto_detect_gke_projects` variables
 - Removed GKE API enablement resources and outputs
 - Removed Cloud SQL Admin API (`sqladmin.googleapis.com`) enablement - no longer needed for nOps integration

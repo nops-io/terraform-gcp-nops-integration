@@ -19,14 +19,21 @@ The module code is organized into separate files:
 
 This module automatically enables the following APIs across your organization:
 
+**Required APIs (always enabled):**
+
 | API Service | API Service ID | Scope |
 |------------|----------------|-------|
 | Cloud Asset API | `cloudasset.googleapis.com` | Central Ingestion Project |
 | Cloud Billing API | `cloudbilling.googleapis.com` | Central Ingestion Project |
 | Recommender API | `recommender.googleapis.com` | All projects (scoped to billing account) |
-| BigQuery Reservation API | `bigqueryreservation.googleapis.com` | All projects |
 
-**All APIs are always enabled** - no configuration needed. Simply provide your organization ID and central ingestion project ID.
+**Optional APIs:**
+
+| API Service | API Service ID | When Required |
+|------------|----------------|---------------|
+| BigQuery Reservation API | `bigqueryreservation.googleapis.com` | Only if using flat-rate/reservation BigQuery pricing (for capacity commitments) |
+
+**Note:** BigQuery Reservation API is disabled by default. Most customers use on-demand BigQuery pricing and can skip this. Only enable it if you use flat-rate or reservation-based BigQuery pricing.
 
 ## Prerequisites
 
@@ -94,12 +101,15 @@ provider "google" {
   # export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account-key.json"
 }
 
-# Simple module invocation - enables all APIs and grants all IAM roles
-# All APIs are automatically enabled:
+# Simple module invocation - enables all required APIs and grants all IAM roles
+# Required APIs are automatically enabled:
 # - Cloud Asset API (Central Ingestion Project)
 # - Cloud Billing API (Central Ingestion Project)
 # - Recommender API (all projects)
-# - BigQuery Reservation API (all projects)
+#
+# Optional APIs (disabled by default):
+# - BigQuery Reservation API (only if using flat-rate/reservation BigQuery pricing)
+#   enable_bigquery_reservation_api = true  # Set to true if needed
 #
 # All IAM roles are automatically granted (defaults to true):
 # - Organization-level IAM roles (requires nops_service_account_email)
@@ -114,6 +124,9 @@ module "nops_gcp_integration" {
   # Required: nOps service account information for IAM roles
   nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
   billing_account_id = "XXXXXX-XXXXXX-XXXXXX"  # Replace with your Billing Account ID
+  
+  # Optional: Enable BigQuery Reservation API (only if using flat-rate/reservation pricing)
+  # enable_bigquery_reservation_api = false  # Default: false (most customers use on-demand pricing)
   
   # Optional: All IAM roles are granted by default (set to false to disable)
   # grant_nops_iam_roles = true         # Organization-level roles (default: true)
@@ -153,11 +166,13 @@ That's it! With just 4 required variables, this module will:
 
 ### What Gets Enabled and Granted
 
-**APIs Enabled (automatically, no configuration needed):**
+**Required APIs Enabled (automatically, no configuration needed):**
 - Cloud Asset API (Central Ingestion Project)
 - Cloud Billing API (Central Ingestion Project)
 - Recommender API (all projects)
-- BigQuery Reservation API (all projects)
+
+**Optional APIs:**
+- BigQuery Reservation API (disabled by default) - Only enable if using flat-rate or reservation-based BigQuery pricing (for capacity commitments). Most customers use on-demand pricing and can skip this.
 
 **Organization-Level IAM Roles Granted (automatically, default: true):**
 - `roles/cloudasset.viewer` - To enumerate assets across services for correlation
@@ -252,6 +267,7 @@ provider "google" {
 | `organization_id` | GCP Organization ID | `string` | - | yes |
 | `central_ingestion_project_id` | Central Ingestion Project ID | `string` | - | yes |
 | `disable_apis_on_destroy` | Disable APIs when destroyed | `bool` | `false` | no |
+| `enable_bigquery_reservation_api` | Enable BigQuery Reservation API. Only required if using flat-rate or reservation-based BigQuery pricing (for capacity commitments). Most customers use on-demand pricing and can skip this. | `bool` | `false` | no |
 | `nops_service_account_email` | Email address of the nOps service account to grant required IAM roles | `string` | `""` | no |
 | `grant_nops_iam_roles` | Whether to grant organization-level IAM roles to the nOps service account | `bool` | `true` | no |
 | `billing_account_id` | The GCP Billing Account ID to grant billing viewer role. Required if grant_nops_billing_iam_roles is true | `string` | `""` | no |

@@ -38,3 +38,9 @@ variable "grant_nops_billing_iam_roles" {
   default     = true
 }
 
+variable "enable_bigquery_reservation_api" {
+  description = "Enable BigQuery Reservation API in all projects. Only required if using flat-rate or reservation-based BigQuery pricing (for capacity commitments). Most customers use on-demand pricing and can skip this."
+  type        = bool
+  default     = false
+}
+

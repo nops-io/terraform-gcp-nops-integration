@@ -33,18 +33,17 @@ provider "google" {
 # All IAM roles are automatically granted (defaults to true):
 # - Organization-level IAM roles (requires nops_service_account_email)
 # - Billing account-level IAM roles (requires nops_service_account_email and billing_account_id)
-# - Project-level IAM roles (requires nops_service_account_email and billing_export_project_id)
+# - Project-level IAM roles (requires nops_service_account_email and billing_account_id)
 # - BigQuery dataset-level IAM roles (requires nops_service_account_email and BigQuery dataset IDs)
 module "nops_gcp_integration" {
   source = "../.." # Adjust path based on your setup
 
-  # Required: Organization and project information
-  organization_id           = "123456789012"                # Replace with your GCP Organization ID
-  billing_export_project_id = "your-billing-export-project" # Replace with your billing export project ID
+  # Required: Organization and billing account information
+  organization_id  = "123456789012"          # Replace with your GCP Organization ID
+  billing_account_id = "XXXXXX-XXXXXX-XXXXXX" # Replace with your Billing Account ID
 
   # Required: nOps service account information for IAM roles
   nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
-  billing_account_id         = "XXXXXX-XXXXXX-XXXXXX" # Replace with your Billing Account ID
 
   # Required: BigQuery dataset IDs for billing exports
   bigquery_detailed_usage_cost_dataset_id     = "your-project:detailed_usage_cost_dataset"     # Replace with your Detailed Usage Cost dataset ID
@@ -70,9 +69,9 @@ output "api_enablement_summary" {
   value       = module.nops_gcp_integration.enabled_apis_summary
 }
 
-output "billing_export_project_id" {
-  description = "The billing export project ID where APIs are enabled"
-  value       = module.nops_gcp_integration.billing_export_project_id
+output "billing_account_id" {
+  description = "The billing account ID where APIs are enabled"
+  value       = module.nops_gcp_integration.billing_account_id
 }
 
 output "nops_iam_roles_granted" {

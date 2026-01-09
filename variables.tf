@@ -3,8 +3,8 @@ variable "organization_id" {
   type        = string
 }
 
-variable "billing_export_project_id" {
-  description = "The GCP Project ID that hosts billing exports. Required for API enablement and project-level IAM roles"
+variable "billing_account_id" {
+  description = "The GCP Billing Account ID. Used for billing account-level IAM roles, API enablement, and project-level IAM roles on the billing export project"
   type        = string
 }
 
@@ -26,11 +26,6 @@ variable "grant_nops_iam_roles" {
   default     = true
 }
 
-variable "billing_account_id" {
-  description = "The GCP Billing Account ID to grant billing viewer role. Required if grant_nops_billing_iam_roles is true"
-  type        = string
-  default     = ""
-}
 
 variable "grant_nops_billing_iam_roles" {
   description = "Whether to grant billing account-level IAM roles (billing.viewer) to the nOps service account"

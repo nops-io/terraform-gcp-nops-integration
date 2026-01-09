@@ -12,8 +12,9 @@ All notable changes to this project will be documented in this file.
 - **BigQuery Reservation API is now optional** - The BigQuery Reservation API is now disabled by default. Add `enable_bigquery_reservation_api = true` if you use flat-rate or reservation-based BigQuery pricing.
 - **Removed GKE API enablement** - Kubernetes Engine API enablement has been removed. Remove `target_gke_project_ids`, `enable_gke_apis_for_all_projects`, and `auto_detect_gke_projects` variables.
 - **APIs now only enabled in billing export project** - All APIs (Cloud Asset, Cloud Billing, Recommender, and optional BigQuery Reservation) are now enabled only in the billing export project, not across all projects or in a central ingestion project.
-- **Removed `central_ingestion_project_id` variable** - This variable is no longer needed. APIs are enabled in the `billing_export_project_id` instead.
-- **Made `billing_export_project_id` required** - This variable is now required (previously optional) as it's used for API enablement.
+- **Removed `central_ingestion_project_id` variable** - This variable is no longer needed. APIs are enabled using the `billing_account_id` instead.
+- **Removed `billing_export_project_id` variable** - This variable has been removed. Use `billing_account_id` for both billing account-level IAM roles and API enablement.
+- **Made `billing_account_id` required** - This variable is now required (previously optional) as it's used for billing account-level IAM roles, API enablement, and project-level IAM roles.
 - **Removed `google_projects` data source** - The module no longer queries all projects in the organization since APIs are only enabled in the billing export project.
 - **Removed `total_projects` output** - This output is no longer available since the module no longer enumerates all projects.
 
@@ -28,7 +29,7 @@ All notable changes to this project will be documented in this file.
 - Added project-level IAM role granting for nOps service account
   - Grants serviceusage.serviceUsageConsumer role on billing exports project
   - Configurable via `grant_nops_project_iam_roles` variable (default: true)
-  - Requires `billing_export_project_id` variable
+  - Uses `billing_account_id` variable
 - Added BigQuery dataset-level IAM role granting for nOps service account
   - Grants bigquery.dataViewer role on three billing export datasets: Detailed Usage Cost, Pricing, and Committed Use Discounts
   - Configurable via `grant_nops_bigquery_dataset_iam_roles` variable (default: true)
@@ -56,7 +57,7 @@ All notable changes to this project will be documented in this file.
 - Simplified module invocation - single module call enables everything by default
 - Updated examples to show simplest possible usage (4 required variables)
 - Updated all documentation to reflect billing export project as the single location for API enablement
-- Updated examples to use `billing_export_project_id` instead of `central_ingestion_project_id`
+- Updated examples to use `billing_account_id` instead of `central_ingestion_project_id` and `billing_export_project_id`
 - Updated README to emphasize simplicity and ease of use
 
 ### Removed
@@ -66,7 +67,8 @@ All notable changes to this project will be documented in this file.
 - Removed GKE API enablement resources and outputs
 - Removed Cloud SQL Admin API (`sqladmin.googleapis.com`) enablement - no longer needed for nOps integration
 - Removed Cloud Run Admin API (`run.googleapis.com`) enablement - no longer needed for nOps integration
-- Removed `central_ingestion_project_id` variable - APIs are now enabled in `billing_export_project_id` instead
+- Removed `central_ingestion_project_id` variable - APIs are now enabled using `billing_account_id`
+- Removed `billing_export_project_id` variable - Now using `billing_account_id` for all billing-related operations
 - Removed `google_projects` data source - no longer needed since APIs are only enabled in the billing export project
 - Removed `total_projects` output - no longer available since the module no longer enumerates all projects
 

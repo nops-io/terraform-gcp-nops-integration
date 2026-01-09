@@ -26,8 +26,6 @@ provider "google" {
 # - Cloud Billing API (Central Ingestion Project)
 # - Recommender API (all projects)
 # - BigQuery Reservation API (all projects)
-# - Cloud Run Admin API (all projects)
-# - Cloud SQL Admin API (all projects)
 #
 # All IAM roles are automatically granted (defaults to true):
 # - Organization-level IAM roles (requires nops_service_account_email)

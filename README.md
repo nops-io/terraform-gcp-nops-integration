@@ -25,8 +25,6 @@ This module automatically enables the following APIs across your organization:
 | Cloud Billing API | `cloudbilling.googleapis.com` | Central Ingestion Project |
 | Recommender API | `recommender.googleapis.com` | All projects (scoped to billing account) |
 | BigQuery Reservation API | `bigqueryreservation.googleapis.com` | All projects |
-| Cloud Run Admin API | `run.googleapis.com` | All projects |
-| Cloud SQL Admin API | `sqladmin.googleapis.com` | All projects |
 
 **All APIs are always enabled** - no configuration needed. Simply provide your organization ID and central ingestion project ID.
 
@@ -102,8 +100,6 @@ provider "google" {
 # - Cloud Billing API (Central Ingestion Project)
 # - Recommender API (all projects)
 # - BigQuery Reservation API (all projects)
-# - Cloud Run Admin API (all projects)
-# - Cloud SQL Admin API (all projects)
 #
 # All IAM roles are automatically granted (defaults to true):
 # - Organization-level IAM roles (requires nops_service_account_email)
@@ -162,8 +158,6 @@ That's it! With just 4 required variables, this module will:
 - Cloud Billing API (Central Ingestion Project)
 - Recommender API (all projects)
 - BigQuery Reservation API (all projects)
-- Cloud Run Admin API (all projects)
-- Cloud SQL Admin API (all projects)
 
 **Organization-Level IAM Roles Granted (automatically, default: true):**
 - `roles/cloudasset.viewer` - To enumerate assets across services for correlation

@@ -1,28 +1,57 @@
-output "central_ingestion_project_id" {
-  description = "The Central Ingestion Project ID"
-  value       = var.central_ingestion_project_id
+# API Enablement Outputs
+output "billing_account_id" {
+  description = "The Billing Account ID where APIs are enabled"
+  value       = var.billing_account_id
 }
 
 output "enabled_apis_summary" {
-  description = "Summary of enabled APIs by project"
+  description = "Summary of enabled APIs in the billing export project"
   value = {
-    cloud_asset_api_enabled = var.enable_cloud_asset_api ? [var.central_ingestion_project_id] : []
-    cloud_billing_api_enabled = var.enable_cloud_billing_api ? [var.central_ingestion_project_id] : []
-    recommender_api_enabled = var.enable_recommender_api ? [for project_id, project in local.all_projects : project_id] : []
-    container_api_enabled = [for project_id, project in local.gke_projects : project_id]
-    bigquery_reservation_api_enabled = var.enable_bigquery_reservation_api ? [for project_id, project in local.all_projects : project_id] : []
-    cloud_run_admin_api_enabled = var.enable_cloud_run_admin_api ? [for project_id, project in local.all_projects : project_id] : []
-    cloud_sql_admin_api_enabled = var.enable_cloud_sql_admin_api ? [for project_id, project in local.all_projects : project_id] : []
+    cloud_asset_api_enabled          = [var.billing_account_id]
+    cloud_billing_api_enabled        = [var.billing_account_id]
+    recommender_api_enabled          = [var.billing_account_id]
+    bigquery_reservation_api_enabled = var.enable_bigquery_reservation_api ? [var.billing_account_id] : []
   }
 }
 
-output "total_projects" {
-  description = "Total number of projects in the organization"
-  value       = length(local.all_projects)
+# Organization IAM Outputs
+output "nops_iam_roles_granted" {
+  description = "List of organization-level IAM roles granted to the nOps service account"
+  value = var.grant_nops_iam_roles && var.nops_service_account_email != "" ? [
+    "roles/cloudasset.viewer",
+    "roles/browser",
+    "roles/recommender.viewer",
+    "roles/logging.viewer",
+    "roles/compute.viewer",
+    "roles/container.viewer",
+    "roles/cloudsql.viewer",
+    "roles/run.viewer"
+  ] : []
 }
 
-output "gke_projects_count" {
-  description = "Number of projects where GKE API will be enabled"
-  value       = length(local.gke_projects)
+# Billing Account IAM Outputs
+output "nops_billing_iam_roles_granted" {
+  description = "List of billing account-level IAM roles granted to the nOps service account"
+  value = var.grant_nops_billing_iam_roles && var.nops_service_account_email != "" && var.billing_account_id != "" ? [
+    "roles/billing.viewer"
+  ] : []
+}
+
+# Project IAM Outputs
+output "nops_project_iam_roles_granted" {
+  description = "List of project-level IAM roles granted to the nOps service account on the billing exports project"
+  value = var.grant_nops_project_iam_roles && var.nops_service_account_email != "" && var.billing_account_id != "" ? [
+    "roles/serviceusage.serviceUsageConsumer"
+  ] : []
+}
+
+# BigQuery Dataset IAM Outputs
+output "nops_bigquery_dataset_iam_roles_granted" {
+  description = "List of BigQuery dataset-level IAM roles granted to the nOps service account on billing export datasets"
+  value = var.grant_nops_bigquery_dataset_iam_roles && var.nops_service_account_email != "" ? concat(
+    var.bigquery_detailed_usage_cost_dataset_id != "" ? ["roles/bigquery.dataViewer on ${var.bigquery_detailed_usage_cost_dataset_id}"] : [],
+    var.bigquery_pricing_dataset_id != "" ? ["roles/bigquery.dataViewer on ${var.bigquery_pricing_dataset_id}"] : [],
+    var.bigquery_committed_use_discounts_dataset_id != "" ? ["roles/bigquery.dataViewer on ${var.bigquery_committed_use_discounts_dataset_id}"] : []
+  ) : []
 }
 

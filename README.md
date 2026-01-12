@@ -116,14 +116,15 @@ provider "google" {
 # All IAM roles are automatically granted (defaults to true):
 # - Organization-level IAM roles (requires nops_service_account_email)
 # - Billing account-level IAM roles (requires nops_service_account_email and billing_account_id)
-# - Project-level IAM roles (requires nops_service_account_email and billing_account_id)
+# - Project-level IAM roles (requires nops_service_account_email and billing_export_project_id)
 # - BigQuery dataset-level IAM roles (requires nops_service_account_email and BigQuery dataset IDs)
 module "nops_gcp_integration" {
   source = "./nops-gcp-module"  # or use git URL
   
-  # Required: Organization and billing account information
-  organization_id  = "123456789012"  # Replace with your GCP Organization ID
-  billing_account_id = "XXXXXX-XXXXXX-XXXXXX"  # Replace with your Billing Account ID
+  # Required: Organization, billing account, and billing export project information
+  organization_id           = "123456789012"                # Replace with your GCP Organization ID
+  billing_account_id        = "XXXXXX-XXXXXX-XXXXXX"        # Replace with your Billing Account ID
+  billing_export_project_id = "your-billing-export-project"  # Replace with your Billing Export Project ID
   
   # Required: nOps service account information for IAM roles
   nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
@@ -153,8 +154,13 @@ output "api_enablement_summary" {
 }
 
 output "billing_account_id" {
-  description = "The billing account ID where APIs are enabled"
+  description = "The billing account ID used for billing account-level IAM roles"
   value = module.nops_gcp_integration.billing_account_id
+}
+
+output "billing_export_project_id" {
+  description = "The project ID where APIs are enabled"
+  value = module.nops_gcp_integration.billing_export_project_id
 }
 
 output "nops_iam_roles_granted" {
@@ -290,7 +296,8 @@ provider "google" {
 | Variable | Description | Type | Default | Required |
 |----------|-------------|------|---------|----------|
 | `organization_id` | GCP Organization ID. Required for organization-level IAM roles | `string` | - | yes |
-| `billing_account_id` | The GCP Billing Account ID. Used for billing account-level IAM roles, API enablement, and project-level IAM roles | `string` | - | yes |
+| `billing_account_id` | The GCP Billing Account ID. Used for billing account-level IAM roles only | `string` | - | yes |
+| `billing_export_project_id` | The GCP Project ID where billing exports are configured. Used for API enablement and project-level IAM roles | `string` | - | yes |
 | `bigquery_detailed_usage_cost_dataset_id` | The BigQuery Dataset ID for Detailed Usage Cost export. Format: project_id:dataset_id or dataset_id (if in billing export project). Required if grant_nops_bigquery_dataset_iam_roles is true | `string` | `""` | no |
 | `bigquery_pricing_dataset_id` | The BigQuery Dataset ID for Pricing Export. Format: project_id:dataset_id or dataset_id (if in billing export project). Required if grant_nops_bigquery_dataset_iam_roles is true | `string` | `""` | no |
 | `bigquery_committed_use_discounts_dataset_id` | The BigQuery Dataset ID for Committed Use Discounts Export. Format: project_id:dataset_id or dataset_id (if in billing export project). Required if grant_nops_bigquery_dataset_iam_roles is true | `string` | `""` | no |
@@ -306,7 +313,8 @@ provider "google" {
 
 | Output | Description |
 |--------|-------------|
-| `billing_account_id` | The Billing Account ID where APIs are enabled |
+| `billing_account_id` | The Billing Account ID used for billing account-level IAM roles |
+| `billing_export_project_id` | The Project ID where APIs are enabled |
 | `enabled_apis_summary` | Summary of enabled APIs in the billing export project |
 | `nops_iam_roles_granted` | List of organization-level IAM roles granted to the nOps service account |
 | `nops_billing_iam_roles_granted` | List of billing account-level IAM roles granted to the nOps service account |
@@ -328,7 +336,11 @@ Or via the GCP Console:
 
 ## Finding Your Billing Account ID
 
-The `billing_account_id` is used for billing account-level IAM roles, API enablement, and project-level IAM roles. All required APIs will be enabled using this ID.
+The `billing_account_id` is used for billing account-level IAM roles only. The format is `XXXXXX-XXXXXX-XXXXXX` (with dashes).
+
+## Finding Your Billing Export Project ID
+
+The `billing_export_project_id` is the GCP Project ID where your billing exports are configured. This is used for API enablement and project-level IAM roles. All required APIs will be enabled in this project.
 
 ### How to Find Your Billing Account ID
 
@@ -438,7 +450,7 @@ gcloud bigquery datasets describe DATASET_ID --project=YOUR_BILLING_ACCOUNT_ID
 
 The dataset ID can be provided in two formats:
 - **Full format**: `project_id:dataset_id` (e.g., `my-project:gcp_billing_export_v1_123456`)
-- **Short format**: `dataset_id` (if the dataset is in the billing export project specified by `billing_account_id`)
+- **Short format**: `dataset_id` (if the dataset is in the billing export project specified by `billing_export_project_id`)
 
 ### Example
 
@@ -447,7 +459,7 @@ If your BigQuery datasets are:
 - **Pricing**: `gcp_billing_export_pricing_123456` in project `billing-export-project-12345`
 - **Committed Use Discounts**: `gcp_billing_export_cud_123456` in project `billing-export-project-12345`
 
-And your `billing_account_id` is `billing-export-project-12345`, you can use either:
+And your `billing_export_project_id` is `billing-export-project-12345`, you can use either:
 
 ```hcl
 # Full format
@@ -455,7 +467,7 @@ bigquery_detailed_usage_cost_dataset_id = "billing-export-project-12345:gcp_bill
 bigquery_pricing_dataset_id = "billing-export-project-12345:gcp_billing_export_pricing_123456"
 bigquery_committed_use_discounts_dataset_id = "billing-export-project-12345:gcp_billing_export_cud_123456"
 
-# Or short format (if datasets are in the project specified by billing_account_id)
+# Or short format (if datasets are in the project specified by billing_export_project_id)
 bigquery_detailed_usage_cost_dataset_id = "gcp_billing_export_v1_123456"
 bigquery_pricing_dataset_id = "gcp_billing_export_pricing_123456"
 bigquery_committed_use_discounts_dataset_id = "gcp_billing_export_cud_123456"
@@ -509,7 +521,8 @@ Ensure your credentials have the required permissions listed above.
 Verify that:
 - The `organization_id` is correct
 - The `billing_account_id` exists and is accessible
-- Your credentials have access to the organization and the billing account
+- The `billing_export_project_id` exists and is accessible
+- Your credentials have access to the organization, billing account, and billing export project
 
 ### APIs not enabling
 

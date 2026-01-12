@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-01-13
+
+### Added
+- Added `enable_domain_restricted_sharing` variable to configure domain restricted sharing org policy for nOps organization
+  - When enabled, creates an organization policy (`iam.allowedPolicyMemberDomains`) that allows the nOps customer ID
+  - Required for customers who have domain restricted sharing enabled in their GCP organization
+  - Default: `false` (optional feature)
+- Added `nops_customer_id` variable to specify the nOps Google Workspace Customer ID
+  - Required when `enable_domain_restricted_sharing` is true
+  - Can be found in nOps → Organization Settings → GCP Integration
+  - Default: `""` (empty string)
+- Added `org_policy.tf` file with domain restricted sharing org policy resource
+  - Includes validation to ensure `nops_customer_id` is provided when domain restricted sharing is enabled
+
 ## [2.0.2] - 2026-01-12
 
 ### Fixed

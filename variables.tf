@@ -74,3 +74,15 @@ variable "grant_nops_bigquery_dataset_iam_roles" {
   default     = true
 }
 
+variable "enable_domain_restricted_sharing" {
+  description = "Whether to configure domain restricted sharing org policy to allow the nOps organization. Required for customers with domain restricted sharing enabled"
+  type        = bool
+  default     = false
+}
+
+variable "nops_customer_id" {
+  description = "The nOps Google Workspace Customer ID. Required when enable_domain_restricted_sharing is true. Can be found in nOps → Organization Settings → GCP Integration"
+  type        = string
+  default     = ""
+}
+

@@ -143,6 +143,10 @@ module "nops_gcp_integration" {
   # grant_nops_project_iam_roles = true # Project-level roles (default: true)
   # grant_nops_bigquery_dataset_iam_roles = true # BigQuery dataset roles (default: true)
   
+  # Optional: Enable domain restricted sharing org policy for nOps organization (default: false)
+  # enable_domain_restricted_sharing = true # Required for customers with domain restricted sharing enabled
+  # nops_customer_id = "xxxxxxxxx" # Required when enable_domain_restricted_sharing is true. Find in nOps → Organization Settings → GCP Integration
+  
   # Optional: Disable APIs when module is destroyed (default: false)
   # disable_apis_on_destroy = false
 }
@@ -308,6 +312,8 @@ provider "google" {
 | `grant_nops_billing_iam_roles` | Whether to grant billing account-level IAM roles (billing.viewer) to the nOps service account | `bool` | `true` | no |
 | `grant_nops_project_iam_roles` | Whether to grant project-level IAM roles (Service Usage Consumer) to the nOps service account on the billing exports project | `bool` | `true` | no |
 | `grant_nops_bigquery_dataset_iam_roles` | Whether to grant BigQuery dataset-level IAM roles (bigquery.dataViewer) to the nOps service account on billing export datasets | `bool` | `true` | no |
+| `enable_domain_restricted_sharing` | Whether to configure domain restricted sharing org policy to allow the nOps organization. Required for customers with domain restricted sharing enabled | `bool` | `false` | no |
+| `nops_customer_id` | The nOps Google Workspace Customer ID. Required when enable_domain_restricted_sharing is true. Can be found in nOps → Organization Settings → GCP Integration | `string` | `""` | no |
 
 ## Outputs
 

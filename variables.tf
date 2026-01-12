@@ -4,7 +4,12 @@ variable "organization_id" {
 }
 
 variable "billing_account_id" {
-  description = "The GCP Billing Account ID. Used for billing account-level IAM roles, API enablement, and project-level IAM roles on the billing export project"
+  description = "The GCP Billing Account ID. Used for billing account-level IAM roles only"
+  type        = string
+}
+
+variable "billing_export_project_id" {
+  description = "The GCP Project ID where billing exports are configured. Used for API enablement and project-level IAM roles"
   type        = string
 }
 

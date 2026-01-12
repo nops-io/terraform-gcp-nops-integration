@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.2] - 2026-01-12
+
+### Fixed
+- Fixed critical bug where `billing_account_id` (billing account ID format: `XXXXXX-XXXXXX-XXXXXX`) was incorrectly used as a project ID in API enablement and project-level IAM resources
+- Fixed BigQuery dataset IAM resources missing required `project` field
+- Added proper project ID extraction logic for BigQuery dataset IDs in format `project_id:dataset_id`
+
+### Added
+- Added `billing_export_project_id` variable - Required variable for the GCP Project ID where billing exports are configured
+  - Used for API enablement (Cloud Asset API, Cloud Billing API, Recommender API, BigQuery Reservation API)
+  - Used for project-level IAM roles
+  - Separate from `billing_account_id` which is only used for billing account-level IAM roles
+- Added locals in `main.tf` to properly parse BigQuery dataset IDs and extract project IDs
+  - Supports both `project_id:dataset_id` format and `dataset_id` format (defaults to `billing_export_project_id`)
+
+### Changed
+- Updated `billing_account_id` variable description to clarify it's only used for billing account-level IAM roles
+- Updated all API enablement resources to use `billing_export_project_id` instead of `billing_account_id`
+- Updated project-level IAM resources to use `billing_export_project_id` instead of `billing_account_id`
+- Updated BigQuery dataset IAM resources to include required `project` field with proper project ID extraction
+- Updated examples to include the new `billing_export_project_id` variable
+
 ## [2.0.1] - 2026-01-09
 
 ### Changed

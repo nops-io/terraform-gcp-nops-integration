@@ -3,14 +3,25 @@ variable "organization_id" {
   type        = string
 }
 
-variable "billing_account_id" {
-  description = "The GCP Billing Account ID. Used for billing account-level IAM roles only"
-  type        = string
-}
+variable "billing_accounts" {
+  description = "List of billing account configs. One entry per billing account; each can use the same or different billing export projects."
+  type = list(object({
+    billing_account_id                          = string
+    billing_export_project_id                   = string
+    bigquery_detailed_usage_cost_dataset_id     = optional(string, "")
+    bigquery_pricing_dataset_id                 = optional(string, "")
+    bigquery_committed_use_discounts_dataset_id = optional(string, "")
+  }))
 
-variable "billing_export_project_id" {
-  description = "The GCP Project ID where billing exports are configured. Used for API enablement and project-level IAM roles"
-  type        = string
+  validation {
+    condition     = length(var.billing_accounts) > 0
+    error_message = "billing_accounts must contain at least one entry."
+  }
+
+  validation {
+    condition     = length(var.billing_accounts) == length(distinct([for b in var.billing_accounts : b.billing_account_id]))
+    error_message = "Each billing_account_id in billing_accounts must be unique."
+  }
 }
 
 variable "disable_apis_on_destroy" {
@@ -48,24 +59,6 @@ variable "grant_nops_project_iam_roles" {
   description = "Whether to grant project-level IAM roles (Service Usage Consumer) to the nOps service account on the billing exports project"
   type        = bool
   default     = true
-}
-
-variable "bigquery_detailed_usage_cost_dataset_id" {
-  description = "The BigQuery Dataset ID for Detailed Usage Cost export. Format: project_id:dataset_id or dataset_id (if in billing export project). Required if grant_nops_bigquery_dataset_iam_roles is true"
-  type        = string
-  default     = ""
-}
-
-variable "bigquery_pricing_dataset_id" {
-  description = "The BigQuery Dataset ID for Pricing Export. Format: project_id:dataset_id or dataset_id (if in billing export project). Required if grant_nops_bigquery_dataset_iam_roles is true"
-  type        = string
-  default     = ""
-}
-
-variable "bigquery_committed_use_discounts_dataset_id" {
-  description = "The BigQuery Dataset ID for Committed Use Discounts Export. Format: project_id:dataset_id or dataset_id (if in billing export project). Required if grant_nops_bigquery_dataset_iam_roles is true"
-  type        = string
-  default     = ""
 }
 
 variable "grant_nops_bigquery_dataset_iam_roles" {

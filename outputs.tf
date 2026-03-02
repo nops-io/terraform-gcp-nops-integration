@@ -1,21 +1,21 @@
 # API Enablement Outputs
-output "billing_account_id" {
-  description = "The Billing Account ID used for billing account-level IAM roles"
-  value       = var.billing_account_id
+output "billing_account_ids" {
+  description = "List of Billing Account IDs used for billing account-level IAM roles"
+  value       = [for b in var.billing_accounts : b.billing_account_id]
 }
 
-output "billing_export_project_id" {
-  description = "The Project ID where APIs are enabled"
-  value       = var.billing_export_project_id
+output "billing_export_project_ids" {
+  description = "Set of project IDs where APIs are enabled (distinct across billing accounts)"
+  value       = local.billing_export_project_ids
 }
 
 output "enabled_apis_summary" {
-  description = "Summary of enabled APIs in the billing export project"
+  description = "Summary of enabled APIs per billing export project"
   value = {
-    cloud_asset_api_enabled          = [var.billing_export_project_id]
-    cloud_billing_api_enabled        = [var.billing_export_project_id]
-    recommender_api_enabled          = [var.billing_export_project_id]
-    bigquery_reservation_api_enabled = var.enable_bigquery_reservation_api ? [var.billing_export_project_id] : []
+    cloud_asset_api_enabled          = local.billing_export_project_ids
+    cloud_billing_api_enabled        = local.billing_export_project_ids
+    recommender_api_enabled          = local.billing_export_project_ids
+    bigquery_reservation_api_enabled = var.enable_bigquery_reservation_api ? local.billing_export_project_ids : []
   }
 }
 
@@ -36,27 +36,19 @@ output "nops_iam_roles_granted" {
 
 # Billing Account IAM Outputs
 output "nops_billing_iam_roles_granted" {
-  description = "List of billing account-level IAM roles granted to the nOps service account"
-  value = var.grant_nops_billing_iam_roles && var.nops_service_account_email != "" && var.billing_account_id != "" ? [
-    "roles/billing.viewer"
-  ] : []
+  description = "List of billing account-level IAM roles granted to the nOps service account (one per billing account)"
+  value       = var.grant_nops_billing_iam_roles && var.nops_service_account_email != "" ? [for id in keys(local.billing_accounts_map) : "roles/billing.viewer on ${id}"] : []
 }
 
 # Project IAM Outputs
 output "nops_project_iam_roles_granted" {
-  description = "List of project-level IAM roles granted to the nOps service account on the billing exports project"
-  value = var.grant_nops_project_iam_roles && var.nops_service_account_email != "" && var.billing_export_project_id != "" ? [
-    "roles/serviceusage.serviceUsageConsumer"
-  ] : []
+  description = "List of project-level IAM roles granted to the nOps service account on each billing exports project"
+  value       = var.grant_nops_project_iam_roles && var.nops_service_account_email != "" ? [for p in local.billing_export_project_ids : "roles/serviceusage.serviceUsageConsumer on ${p}"] : []
 }
 
 # BigQuery Dataset IAM Outputs
 output "nops_bigquery_dataset_iam_roles_granted" {
   description = "List of BigQuery dataset-level IAM roles granted to the nOps service account on billing export datasets"
-  value = var.grant_nops_bigquery_dataset_iam_roles && var.nops_service_account_email != "" ? concat(
-    var.bigquery_detailed_usage_cost_dataset_id != "" ? ["roles/bigquery.dataViewer on ${var.bigquery_detailed_usage_cost_dataset_id}"] : [],
-    var.bigquery_pricing_dataset_id != "" ? ["roles/bigquery.dataViewer on ${var.bigquery_pricing_dataset_id}"] : [],
-    var.bigquery_committed_use_discounts_dataset_id != "" ? ["roles/bigquery.dataViewer on ${var.bigquery_committed_use_discounts_dataset_id}"] : []
-  ) : []
+  value       = var.grant_nops_bigquery_dataset_iam_roles && var.nops_service_account_email != "" ? [for k in keys(local.datasets_for_iam) : "roles/bigquery.dataViewer on ${k}"] : []
 }
 

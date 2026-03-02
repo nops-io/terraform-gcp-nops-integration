@@ -2,34 +2,29 @@ terraform {
   required_version = ">= 1.0"
 }
 
-# Extract project IDs and dataset IDs from BigQuery dataset ID strings
-# Dataset IDs can be in format "project_id:dataset_id" or just "dataset_id"
+# Billing accounts keyed by billing_account_id for stable for_each
 locals {
-  # Detailed Usage Cost dataset
-  detailed_usage_cost_parts = var.bigquery_detailed_usage_cost_dataset_id != "" ? split(":", var.bigquery_detailed_usage_cost_dataset_id) : []
-  detailed_usage_cost_project_id = var.bigquery_detailed_usage_cost_dataset_id != "" ? (
-    length(local.detailed_usage_cost_parts) > 1 ? local.detailed_usage_cost_parts[0] : var.billing_export_project_id
-  ) : var.billing_export_project_id
-  detailed_usage_cost_dataset_id_only = var.bigquery_detailed_usage_cost_dataset_id != "" ? (
-    length(local.detailed_usage_cost_parts) > 1 ? local.detailed_usage_cost_parts[1] : var.bigquery_detailed_usage_cost_dataset_id
-  ) : ""
+  billing_accounts_map = { for b in var.billing_accounts : b.billing_account_id => b }
 
-  # Pricing dataset
-  pricing_parts = var.bigquery_pricing_dataset_id != "" ? split(":", var.bigquery_pricing_dataset_id) : []
-  pricing_project_id = var.bigquery_pricing_dataset_id != "" ? (
-    length(local.pricing_parts) > 1 ? local.pricing_parts[0] : var.billing_export_project_id
-  ) : var.billing_export_project_id
-  pricing_dataset_id_only = var.bigquery_pricing_dataset_id != "" ? (
-    length(local.pricing_parts) > 1 ? local.pricing_parts[1] : var.bigquery_pricing_dataset_id
-  ) : ""
+  # Distinct billing export project IDs (one project can serve multiple billing accounts)
+  billing_export_project_ids = toset([for b in var.billing_accounts : b.billing_export_project_id])
 
-  # Committed Use Discounts dataset
-  committed_use_discounts_parts = var.bigquery_committed_use_discounts_dataset_id != "" ? split(":", var.bigquery_committed_use_discounts_dataset_id) : []
-  committed_use_discounts_project_id = var.bigquery_committed_use_discounts_dataset_id != "" ? (
-    length(local.committed_use_discounts_parts) > 1 ? local.committed_use_discounts_parts[0] : var.billing_export_project_id
-  ) : var.billing_export_project_id
-  committed_use_discounts_dataset_id_only = var.bigquery_committed_use_discounts_dataset_id != "" ? (
-    length(local.committed_use_discounts_parts) > 1 ? local.committed_use_discounts_parts[1] : var.bigquery_committed_use_discounts_dataset_id
-  ) : ""
+  # Parse all BigQuery dataset IDs from all billing accounts. Dataset ID can be "project_id:dataset_id" or "dataset_id" (defaults to billing_export_project_id).
+  # Multiple dataset types (e.g. detailed_usage_cost and pricing) can point to the same dataset; dedupe by "project_id:dataset_id" so each dataset is granted once.
+  _dataset_entries = flatten([
+    for b in var.billing_accounts : [
+      for name, did in {
+        detailed_usage_cost = b.bigquery_detailed_usage_cost_dataset_id
+        pricing             = b.bigquery_pricing_dataset_id
+        cuds                = b.bigquery_committed_use_discounts_dataset_id
+      } : {
+        key             = did != "" ? (length(split(":", did)) > 1 ? "${split(":", did)[0]}:${split(":", did)[1]}" : "${b.billing_export_project_id}:${did}") : ""
+        project_id      = did != "" ? (length(split(":", did)) > 1 ? split(":", did)[0] : b.billing_export_project_id) : ""
+        dataset_id_only = did != "" ? (length(split(":", did)) > 1 ? split(":", did)[1] : did) : ""
+      } if did != ""
+    ]
+  ])
+  # Group by key and take first value (same project_id/dataset_id_only for duplicate keys)
+  datasets_for_iam = { for k, v in { for e in local._dataset_entries : e.key => { project_id = e.project_id, dataset_id_only = e.dataset_id_only }... } : k => v[0] }
 }
 

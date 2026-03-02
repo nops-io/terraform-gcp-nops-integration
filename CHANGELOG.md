@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0] - 2026-02-26
+
+### ⚠️ BREAKING CHANGES
+
+- **Replaced single-account variables with `billing_accounts` list** - The module now supports multiple billing accounts in a single invocation.
+  - **Removed:** `billing_account_id`, `billing_export_project_id`, `bigquery_detailed_usage_cost_dataset_id`, `bigquery_pricing_dataset_id`, `bigquery_committed_use_discounts_dataset_id`
+  - **Added:** `billing_accounts` - a list of objects, each with: `billing_account_id`, `billing_export_project_id`, `bigquery_detailed_usage_cost_dataset_id`, `bigquery_pricing_dataset_id`, `bigquery_committed_use_discounts_dataset_id` (dataset fields optional, default `""`)
+  - Migrate by wrapping your existing values in a single-element list. Each `billing_account_id` must be unique within the list.
+
+### Added
+
+- Support for multiple billing accounts in one module call
+  - Billing account IAM is applied per billing account
+  - APIs and project IAM are enabled per distinct billing export project (shared projects are only configured once)
+  - BigQuery dataset IAM is applied per distinct dataset (same dataset referenced by multiple billing accounts or export types is granted once)
+- Variable validations for `billing_accounts`: non-empty list and unique `billing_account_id` per entry
+- Outputs `billing_account_ids` (list) and `billing_export_project_ids` (set); role outputs updated to reflect multiple accounts/projects/datasets
+
+### Changed
+
+- `organization_id`, `enable_domain_restricted_sharing`, and `nops_customer_id` remain top-level and apply to all billing accounts
+- Examples and README updated to use the new `billing_accounts` structure
+
 ## [2.1.0] - 2026-01-13
 
 ### Added

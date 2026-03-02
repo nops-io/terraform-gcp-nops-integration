@@ -10,7 +10,7 @@ locals {
   billing_export_project_ids = toset([for b in var.billing_accounts : b.billing_export_project_id])
 
   # Parse all BigQuery dataset IDs from all billing accounts. Dataset ID can be "project_id:dataset_id" or "dataset_id" (defaults to billing_export_project_id).
-  # Dedupe by "project_id:dataset_id" so the same dataset is only granted once.
+  # Multiple dataset types (e.g. detailed_usage_cost and pricing) can point to the same dataset; dedupe by "project_id:dataset_id" so each dataset is granted once.
   _dataset_entries = flatten([
     for b in var.billing_accounts : [
       for name, did in {
@@ -24,6 +24,7 @@ locals {
       } if did != ""
     ]
   ])
-  datasets_for_iam = { for e in local._dataset_entries : e.key => { project_id = e.project_id, dataset_id_only = e.dataset_id_only } }
+  # Group by key and take first value (same project_id/dataset_id_only for duplicate keys)
+  datasets_for_iam = { for k, v in { for e in local._dataset_entries : e.key => { project_id = e.project_id, dataset_id_only = e.dataset_id_only }... } : k => v[0] }
 }
 

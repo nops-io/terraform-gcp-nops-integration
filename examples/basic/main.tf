@@ -32,24 +32,36 @@ provider "google" {
 #
 # All IAM roles are automatically granted (defaults to true):
 # - Organization-level IAM roles (requires nops_service_account_email)
-# - Billing account-level IAM roles (requires nops_service_account_email and billing_account_id)
-# - Project-level IAM roles (requires nops_service_account_email and billing_export_project_id)
-# - BigQuery dataset-level IAM roles (requires nops_service_account_email and BigQuery dataset IDs)
+# - Billing account-level IAM roles (one per entry in billing_accounts)
+# - Project-level IAM roles (per distinct billing_export_project_id)
+# - BigQuery dataset-level IAM roles (per dataset in billing_accounts)
 module "nops_gcp_integration" {
   source = "../.." # Adjust path based on your setup
 
-  # Required: Organization, billing account, and billing export project information
-  organization_id           = "123456789012"                # Replace with your GCP Organization ID
-  billing_account_id        = "XXXXXX-XXXXXX-XXXXXX"        # Replace with your Billing Account ID
-  billing_export_project_id = "your-billing-export-project" # Replace with your Billing Export Project ID
+  # Required: Organization ID (shared across all billing accounts)
+  organization_id = "123456789012" # Replace with your GCP Organization ID
+
+  # Required: One or more billing account configs (add more entries for multiple billing accounts)
+  billing_accounts = [
+    {
+      billing_account_id                          = "XXXXXX-XXXXXX-XXXXXX"        # Replace with your Billing Account ID
+      billing_export_project_id                   = "your-billing-export-project" # Replace with your Billing Export Project ID
+      bigquery_detailed_usage_cost_dataset_id     = "your-project:detailed_usage_cost_dataset"     # or "dataset_id" if in billing export project
+      bigquery_pricing_dataset_id                 = "your-project:pricing_dataset"                 # Replace with your Pricing Export dataset ID
+      bigquery_committed_use_discounts_dataset_id = "your-project:committed_use_discounts_dataset" # Replace with your Committed Use Discounts dataset ID
+    },
+    # Add another billing account if needed:
+    # {
+    #   billing_account_id                          = "YYYYYY-YYYYYY-YYYYYY"
+    #   billing_export_project_id                   = "your-other-billing-project"
+    #   bigquery_detailed_usage_cost_dataset_id     = "your-other-project:detailed_usage_cost"
+    #   bigquery_pricing_dataset_id                 = "your-other-project:pricing"
+    #   bigquery_committed_use_discounts_dataset_id = "your-other-project:cuds"
+    # },
+  ]
 
   # Required: nOps service account information for IAM roles
   nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
-
-  # Required: BigQuery dataset IDs for billing exports
-  bigquery_detailed_usage_cost_dataset_id     = "your-project:detailed_usage_cost_dataset"     # Replace with your Detailed Usage Cost dataset ID
-  bigquery_pricing_dataset_id                 = "your-project:pricing_dataset"                 # Replace with your Pricing Export dataset ID
-  bigquery_committed_use_discounts_dataset_id = "your-project:committed_use_discounts_dataset" # Replace with your Committed Use Discounts dataset ID
 
   # Optional: Enable BigQuery Reservation API (only if using flat-rate/reservation pricing)
   # enable_bigquery_reservation_api = false  # Default: false (most customers use on-demand pricing)
@@ -74,14 +86,14 @@ output "api_enablement_summary" {
   value       = module.nops_gcp_integration.enabled_apis_summary
 }
 
-output "billing_account_id" {
-  description = "The billing account ID used for billing account-level IAM roles"
-  value       = module.nops_gcp_integration.billing_account_id
+output "billing_account_ids" {
+  description = "List of billing account IDs used for billing account-level IAM roles"
+  value       = module.nops_gcp_integration.billing_account_ids
 }
 
-output "billing_export_project_id" {
-  description = "The project ID where APIs are enabled"
-  value       = module.nops_gcp_integration.billing_export_project_id
+output "billing_export_project_ids" {
+  description = "Set of project IDs where APIs are enabled"
+  value       = module.nops_gcp_integration.billing_export_project_ids
 }
 
 output "nops_iam_roles_granted" {

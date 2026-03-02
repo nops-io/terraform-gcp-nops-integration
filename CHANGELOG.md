@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.0] - 2026-03-02
+
+### Added
+
+- **Cloud Commerce Partner Procurement API** (`cloudcommerceprocurement.googleapis.com`) - Now enabled in each distinct billing export project alongside existing required APIs (Cloud Asset, Cloud Billing, Recommender). Supports partner procurement and commerce use cases across all billing accounts.
+
 ## [3.0.0] - 2026-02-26
 
 ### ⚠️ BREAKING CHANGES

@@ -29,6 +29,7 @@ This module automatically enables the following APIs in your billing export proj
 |------------|----------------|-------|
 | Cloud Asset API | `cloudasset.googleapis.com` | Billing Export Project |
 | Cloud Billing API | `cloudbilling.googleapis.com` | Billing Export Project |
+| Cloud Commerce Partner Procurement API | `cloudcommerceprocurement.googleapis.com` | Billing Export Project |
 | Recommender API | `recommender.googleapis.com` | Billing Export Project |
 
 **Optional APIs:**
@@ -107,6 +108,7 @@ provider "google" {
 # Required APIs are automatically enabled in the billing export project:
 # - Cloud Asset API
 # - Cloud Billing API
+# - Cloud Commerce Partner Procurement API
 # - Recommender API
 #
 # Optional APIs (disabled by default):
@@ -208,6 +210,7 @@ That's it! With organization ID, nOps service account email, and at least one bi
 **Required APIs Enabled (automatically, no configuration needed):**
 - Cloud Asset API (Billing Export Project)
 - Cloud Billing API (Billing Export Project)
+- Cloud Commerce Partner Procurement API (Billing Export Project)
 - Recommender API (Billing Export Project)
 
 **Optional APIs:**

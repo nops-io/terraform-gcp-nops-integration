@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.0] - 2026-03-03
+
+### Removed
+
+- **Organization-level IAM roles** (`organization_iam.tf`) - The following organization-level roles are no longer granted to the nOps service account:
+  - `roles/cloudasset.viewer` - Cloud Asset enumeration
+  - `roles/logging.viewer` - Logs for resource analysis
+  - `roles/container.viewer` - GKE cluster data
+  - `roles/run.viewer` - Cloud Run services and configurations
+  - Organization-level roles still granted: `roles/browser`, `roles/recommender.viewer`, `roles/compute.viewer`, `roles/cloudsql.viewer`
+
 ## [3.1.0] - 2026-03-02
 
 ### Added

@@ -12,10 +12,9 @@ output "billing_export_project_ids" {
 output "enabled_apis_summary" {
   description = "Summary of enabled APIs per billing export project"
   value = {
-    cloud_asset_api_enabled          = local.billing_export_project_ids
-    cloud_billing_api_enabled        = local.billing_export_project_ids
-    recommender_api_enabled          = local.billing_export_project_ids
-    bigquery_reservation_api_enabled = var.enable_bigquery_reservation_api ? local.billing_export_project_ids : []
+    cloud_billing_api_enabled                      = local.billing_export_project_ids
+    cloud_commerce_partner_procurement_api_enabled = local.billing_export_project_ids
+    recommender_api_enabled                        = local.billing_export_project_ids
   }
 }
 
@@ -23,14 +22,9 @@ output "enabled_apis_summary" {
 output "nops_iam_roles_granted" {
   description = "List of organization-level IAM roles granted to the nOps service account"
   value = var.grant_nops_iam_roles && var.nops_service_account_email != "" ? [
-    "roles/cloudasset.viewer",
     "roles/browser",
     "roles/recommender.viewer",
-    "roles/logging.viewer",
-    "roles/compute.viewer",
-    "roles/container.viewer",
-    "roles/cloudsql.viewer",
-    "roles/run.viewer"
+    "roles/compute.viewer"
   ] : []
 }
 

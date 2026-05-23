@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.3.0] - 2026-05-23
+
+### Removed
+
+- **Cloud Asset API** (`cloudasset.googleapis.com`) - No longer enabled in billing export projects
+- **BigQuery Reservation API** (`bigqueryreservation.googleapis.com`) - No longer enabled in billing export projects
+- **`enable_bigquery_reservation_api` variable** - Remove this from your configuration if previously set
+- **Organization-level IAM role** (`organization_iam.tf`) - `roles/cloudsql.viewer` is no longer granted to the nOps service account
+
+### Changed
+
+- **`enabled_apis_summary` output** - Removed `cloud_asset_api_enabled` and `bigquery_reservation_api_enabled`; added `cloud_commerce_partner_procurement_api_enabled`
+- **`nops_iam_roles_granted` output** - Aligned with organization-level roles actually granted: `roles/browser`, `roles/recommender.viewer`, `roles/compute.viewer`
+- **README and examples** - Updated to reflect removed APIs, variables, and IAM roles
+
 ## [3.2.0] - 2026-03-03
 
 ### Removed

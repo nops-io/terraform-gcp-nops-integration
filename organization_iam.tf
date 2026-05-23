@@ -21,10 +21,3 @@ resource "google_organization_iam_member" "nops_compute_viewer" {
   role   = "roles/compute.viewer"
   member = "serviceAccount:${var.nops_service_account_email}"
 }
-
-resource "google_organization_iam_member" "nops_cloudsql_viewer" {
-  count  = var.grant_nops_iam_roles && var.nops_service_account_email != "" ? 1 : 0
-  org_id = var.organization_id
-  role   = "roles/cloudsql.viewer"
-  member = "serviceAccount:${var.nops_service_account_email}"
-}

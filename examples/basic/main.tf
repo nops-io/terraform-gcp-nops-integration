@@ -22,13 +22,8 @@ provider "google" {
 
 # Simple module invocation - enables all required APIs and grants all IAM roles
 # Required APIs are automatically enabled in the billing export project:
-# - Cloud Asset API
 # - Cloud Billing API
 # - Recommender API
-#
-# Optional APIs (disabled by default):
-# - BigQuery Reservation API (only if using flat-rate/reservation BigQuery pricing)
-#   enable_bigquery_reservation_api = true  # Set to true if needed
 #
 # All IAM roles are automatically granted (defaults to true):
 # - Organization-level IAM roles (requires nops_service_account_email)
@@ -62,9 +57,6 @@ module "nops_gcp_integration" {
 
   # Required: nOps service account information for IAM roles
   nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
-
-  # Optional: Enable BigQuery Reservation API (only if using flat-rate/reservation pricing)
-  # enable_bigquery_reservation_api = false  # Default: false (most customers use on-demand pricing)
 
   # Optional: All IAM roles are granted by default (set to false to disable)
   # grant_nops_iam_roles = true         # Organization-level roles (default: true)

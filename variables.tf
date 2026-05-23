@@ -49,11 +49,6 @@ variable "grant_nops_billing_iam_roles" {
   default     = true
 }
 
-variable "enable_bigquery_reservation_api" {
-  description = "Enable BigQuery Reservation API in the billing export project. Only required if using flat-rate or reservation-based BigQuery pricing (for capacity commitments). Most customers use on-demand pricing and can skip this."
-  type        = bool
-  default     = false
-}
 
 variable "grant_nops_project_iam_roles" {
   description = "Whether to grant project-level IAM roles (Service Usage Consumer) to the nOps service account on the billing exports project"

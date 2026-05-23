@@ -27,18 +27,9 @@ This module automatically enables the following APIs in your billing export proj
 
 | API Service | API Service ID | Scope |
 |------------|----------------|-------|
-| Cloud Asset API | `cloudasset.googleapis.com` | Billing Export Project |
 | Cloud Billing API | `cloudbilling.googleapis.com` | Billing Export Project |
 | Cloud Commerce Partner Procurement API | `cloudcommerceprocurement.googleapis.com` | Billing Export Project |
 | Recommender API | `recommender.googleapis.com` | Billing Export Project |
-
-**Optional APIs:**
-
-| API Service | API Service ID | When Required |
-|------------|----------------|---------------|
-| BigQuery Reservation API | `bigqueryreservation.googleapis.com` | Only if using flat-rate/reservation BigQuery pricing (for capacity commitments) |
-
-**Note:** BigQuery Reservation API is disabled by default. Most customers use on-demand BigQuery pricing and can skip this. Only enable it if you use flat-rate or reservation-based BigQuery pricing.
 
 ## Prerequisites
 
@@ -106,14 +97,9 @@ provider "google" {
 
 # Simple module invocation - enables all required APIs and grants all IAM roles
 # Required APIs are automatically enabled in the billing export project:
-# - Cloud Asset API
 # - Cloud Billing API
 # - Cloud Commerce Partner Procurement API
 # - Recommender API
-#
-# Optional APIs (disabled by default):
-# - BigQuery Reservation API (only if using flat-rate/reservation BigQuery pricing)
-#   enable_bigquery_reservation_api = true  # Set to true if needed
 #
 # All IAM roles are automatically granted (defaults to true):
 # - Organization-level IAM roles (requires nops_service_account_email)
@@ -147,9 +133,6 @@ module "nops_gcp_integration" {
   
   # Required: nOps service account information for IAM roles
   nops_service_account_email = "your-nops-sa@project.iam.gserviceaccount.com"
-  
-  # Optional: Enable BigQuery Reservation API (only if using flat-rate/reservation pricing)
-  # enable_bigquery_reservation_api = false  # Default: false (most customers use on-demand pricing)
   
   # Optional: All IAM roles are granted by default (set to false to disable)
   # grant_nops_iam_roles = true         # Organization-level roles (default: true)
@@ -208,23 +191,14 @@ That's it! With organization ID, nOps service account email, and at least one bi
 ### What Gets Enabled and Granted
 
 **Required APIs Enabled (automatically, no configuration needed):**
-- Cloud Asset API (Billing Export Project)
 - Cloud Billing API (Billing Export Project)
 - Cloud Commerce Partner Procurement API (Billing Export Project)
 - Recommender API (Billing Export Project)
 
-**Optional APIs:**
-- BigQuery Reservation API (disabled by default) - Only enable if using flat-rate or reservation-based BigQuery pricing (for capacity commitments). Most customers use on-demand pricing and can skip this.
-
 **Organization-Level IAM Roles Granted (automatically, default: true):**
-- `roles/cloudasset.viewer` - To enumerate assets across services for correlation
 - `roles/browser` - To enumerate projects and folders
 - `roles/recommender.viewer` - To read cost recommendations (e.g., rightsizing, idle resources)
-- `roles/logging.viewer` - To read logs for resource analysis
 - `roles/compute.viewer` - To read Compute Engine data (CUDs, instances, regions)
-- `roles/container.viewer` - To read GKE cluster data
-- `roles/cloudsql.viewer` - To read Cloud SQL instances and configurations
-- `roles/run.viewer` - To read Cloud Run services and configurations
 
 **Billing Account-Level IAM Roles Granted (automatically, default: true):**
 - `roles/billing.viewer` - To view billing information for cost analysis
@@ -317,7 +291,6 @@ provider "google" {
 | `organization_id` | GCP Organization ID. Required for organization-level IAM roles. Shared across all billing accounts. | `string` | - | yes |
 | `billing_accounts` | List of billing account configs. One entry per billing account. Each object: `billing_account_id`, `billing_export_project_id`, `bigquery_detailed_usage_cost_dataset_id`, `bigquery_pricing_dataset_id`, `bigquery_committed_use_discounts_dataset_id` (dataset fields optional). Each `billing_account_id` must be unique. | `list(object)` | - | yes |
 | `disable_apis_on_destroy` | Disable APIs when destroyed | `bool` | `false` | no |
-| `enable_bigquery_reservation_api` | Enable BigQuery Reservation API in the billing export project. Only required if using flat-rate or reservation-based BigQuery pricing (for capacity commitments). Most customers use on-demand pricing and can skip this. | `bool` | `false` | no |
 | `nops_service_account_email` | Email address of the nOps service account to grant required IAM roles | `string` | `""` | no |
 | `grant_nops_iam_roles` | Whether to grant organization-level IAM roles to the nOps service account | `bool` | `true` | no |
 | `grant_nops_billing_iam_roles` | Whether to grant billing account-level IAM roles (billing.viewer) to the nOps service account | `bool` | `true` | no |

@@ -211,6 +211,8 @@ That's it! With organization ID, nOps service account email, and at least one bi
 - `roles/bigquery.dataViewer` on Pricing dataset - To read pricing export data
 - `roles/bigquery.dataViewer` on Committed Use Discounts dataset - To read committed use discounts data
 
+If a dataset ID includes a table suffix (`dataset_id.table_id`), `roles/bigquery.dataViewer` is granted only on that specific table or view instead of the whole dataset. See [Dataset ID Format](#dataset-id-format).
+
 ### Advanced Usage - Separate Module Invocations
 
 For advanced use cases where you need more control, you can invoke the module multiple times with different configurations. See the [examples directory](examples/) for more details.
@@ -289,7 +291,7 @@ provider "google" {
 | Variable | Description | Type | Default | Required |
 |----------|-------------|------|---------|----------|
 | `organization_id` | GCP Organization ID. Required for organization-level IAM roles. Shared across all billing accounts. | `string` | - | yes |
-| `billing_accounts` | List of billing account configs. One entry per billing account. Each object: `billing_account_id`, `billing_export_project_id`, `bigquery_detailed_usage_cost_dataset_id`, `bigquery_pricing_dataset_id`, `bigquery_committed_use_discounts_dataset_id` (dataset fields optional). Each `billing_account_id` must be unique. | `list(object)` | - | yes |
+| `billing_accounts` | List of billing account configs. One entry per billing account. Each object: `billing_account_id`, `billing_export_project_id`, `bigquery_detailed_usage_cost_dataset_id`, `bigquery_pricing_dataset_id`, `bigquery_committed_use_discounts_dataset_id` (dataset fields optional). Dataset fields accept `dataset_id`, `project_id:dataset_id`, `dataset_id.table_id`, or `project_id:dataset_id.table_id`; table formats scope access to a single table or view. Each `billing_account_id` must be unique. | `list(object)` | - | yes |
 | `disable_apis_on_destroy` | Disable APIs when destroyed | `bool` | `false` | no |
 | `nops_service_account_email` | Email address of the nOps service account to grant required IAM roles | `string` | `""` | no |
 | `grant_nops_iam_roles` | Whether to grant organization-level IAM roles to the nOps service account | `bool` | `true` | no |
@@ -310,6 +312,7 @@ provider "google" {
 | `nops_billing_iam_roles_granted` | List of billing account-level IAM roles granted (one per billing account) |
 | `nops_project_iam_roles_granted` | List of project-level IAM roles granted on each billing exports project |
 | `nops_bigquery_dataset_iam_roles_granted` | List of BigQuery dataset-level IAM roles granted on billing export datasets |
+| `nops_bigquery_table_iam_roles_granted` | List of BigQuery table/view-level IAM roles granted on billing export tables or views |
 
 ## Finding Your Organization ID
 
@@ -438,9 +441,15 @@ gcloud bigquery datasets describe DATASET_ID --project=YOUR_BILLING_EXPORT_PROJE
 
 ### Dataset ID Format
 
-The dataset ID can be provided in two formats:
+The dataset ID can be provided in four formats:
 - **Full format**: `project_id:dataset_id` (e.g., `my-project:gcp_billing_export_v1_123456`)
 - **Short format**: `dataset_id` (if the dataset is in the billing export project specified by `billing_export_project_id`)
+- **Table/view full format**: `project_id:dataset_id.table_id` (e.g., `my-project:gcp_billing_export_v1_123456.my_billing_view`)
+- **Table/view short format**: `dataset_id.table_id` (if the dataset is in the billing export project)
+
+Dataset-level formats grant `roles/bigquery.dataViewer` on the whole dataset, which is inherited by all tables and views in it. Table/view formats grant `roles/bigquery.dataViewer` only on that specific table or view — use this when you want to limit nOps access to a single table or an authorized view instead of the full dataset.
+
+**Note for views:** granting access on a view lets nOps query the view itself, but the view must also be able to read its underlying tables. Either grant nOps access to the underlying tables too, or configure the view as an [authorized view](https://cloud.google.com/bigquery/docs/authorized-views) on the source dataset.
 
 ### Example
 
@@ -461,6 +470,22 @@ billing_accounts = [
     bigquery_pricing_dataset_id                 = "billing-export-project-12345:gcp_billing_export_pricing_123456"
     bigquery_committed_use_discounts_dataset_id = "billing-export-project-12345:gcp_billing_export_cud_123456"
     # Or short format: "gcp_billing_export_v1_123456", "gcp_billing_export_pricing_123456", "gcp_billing_export_cud_123456"
+  },
+]
+```
+
+To scope access to a single table or view instead of the whole dataset, append the table ID:
+
+```hcl
+billing_accounts = [
+  {
+    billing_account_id                          = "012345-6789AB-CDEF01"
+    billing_export_project_id                   = "billing-export-project-12345"
+    # Table-level grant: only this table/view gets bigquery.dataViewer
+    bigquery_detailed_usage_cost_dataset_id     = "billing-export-project-12345:gcp_billing_export_v1_123456.gcp_billing_export_resource_v1_123456"
+    # Dataset-level grant: the whole dataset (and all its tables) gets bigquery.dataViewer
+    bigquery_pricing_dataset_id                 = "billing-export-project-12345:gcp_billing_export_pricing_123456"
+    bigquery_committed_use_discounts_dataset_id = "billing-export-project-12345:gcp_billing_export_cud_123456"
   },
 ]
 ```
@@ -489,6 +514,7 @@ The service account or user running this module needs:
 - **BigQuery Dataset Level**:
   - `bigquery.datasets.get` (required to read dataset information)
   - `bigquery.datasets.setIamPolicy` (required if granting BigQuery dataset-level IAM roles)
+  - `bigquery.tables.getIamPolicy` and `bigquery.tables.setIamPolicy` (required if granting table/view-level IAM roles via `dataset_id.table_id`)
 
 You can grant these permissions by assigning one of these roles:
 - `roles/serviceusage.serviceUsageAdmin` (recommended for API enablement)

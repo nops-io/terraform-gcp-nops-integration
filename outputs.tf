@@ -46,3 +46,9 @@ output "nops_bigquery_dataset_iam_roles_granted" {
   value       = var.grant_nops_bigquery_dataset_iam_roles && var.nops_service_account_email != "" ? [for k in keys(local.datasets_for_iam) : "roles/bigquery.dataViewer on ${k}"] : []
 }
 
+# BigQuery Table/View IAM Outputs
+output "nops_bigquery_table_iam_roles_granted" {
+  description = "List of BigQuery table/view-level IAM roles granted to the nOps service account on billing export tables or views"
+  value       = var.grant_nops_bigquery_dataset_iam_roles && var.nops_service_account_email != "" ? [for k in keys(local.tables_for_iam) : "roles/bigquery.dataViewer on ${k}"] : []
+}
+

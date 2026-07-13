@@ -39,11 +39,13 @@ module "nops_gcp_integration" {
   # Required: One or more billing account configs (add more entries for multiple billing accounts)
   billing_accounts = [
     {
-      billing_account_id                          = "XXXXXX-XXXXXX-XXXXXX"        # Replace with your Billing Account ID
-      billing_export_project_id                   = "your-billing-export-project" # Replace with your Billing Export Project ID
+      billing_account_id                          = "XXXXXX-XXXXXX-XXXXXX"                         # Replace with your Billing Account ID
+      billing_export_project_id                   = "your-billing-export-project"                  # Replace with your Billing Export Project ID
       bigquery_detailed_usage_cost_dataset_id     = "your-project:detailed_usage_cost_dataset"     # or "dataset_id" if in billing export project
       bigquery_pricing_dataset_id                 = "your-project:pricing_dataset"                 # Replace with your Pricing Export dataset ID
       bigquery_committed_use_discounts_dataset_id = "your-project:committed_use_discounts_dataset" # Replace with your Committed Use Discounts dataset ID
+      # To grant access to a single table or view instead of the whole dataset, append the table ID:
+      # bigquery_detailed_usage_cost_dataset_id   = "your-project:detailed_usage_cost_dataset.your_table_or_view"
     },
     # Add another billing account if needed:
     # {
@@ -106,5 +108,10 @@ output "nops_project_iam_roles_granted" {
 output "nops_bigquery_dataset_iam_roles_granted" {
   description = "List of BigQuery dataset-level IAM roles granted on billing export datasets"
   value       = module.nops_gcp_integration.nops_bigquery_dataset_iam_roles_granted
+}
+
+output "nops_bigquery_table_iam_roles_granted" {
+  description = "List of BigQuery table/view-level IAM roles granted on billing export tables or views"
+  value       = module.nops_gcp_integration.nops_bigquery_table_iam_roles_granted
 }
 

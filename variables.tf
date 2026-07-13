@@ -4,7 +4,7 @@ variable "organization_id" {
 }
 
 variable "billing_accounts" {
-  description = "List of billing account configs. One entry per billing account; each can use the same or different billing export projects."
+  description = "List of billing account configs. One entry per billing account; each can use the same or different billing export projects. Dataset ID fields accept 'dataset_id' or 'project_id:dataset_id' for dataset-level access, or 'dataset_id.table_id' / 'project_id:dataset_id.table_id' to scope access to a specific table or view."
   type = list(object({
     billing_account_id                          = string
     billing_export_project_id                   = string
@@ -21,6 +21,19 @@ variable "billing_accounts" {
   validation {
     condition     = length(var.billing_accounts) == length(distinct([for b in var.billing_accounts : b.billing_account_id]))
     error_message = "Each billing_account_id in billing_accounts must be unique."
+  }
+
+  validation {
+    condition = alltrue([
+      for b in var.billing_accounts : alltrue([
+        for did in [
+          b.bigquery_detailed_usage_cost_dataset_id,
+          b.bigquery_pricing_dataset_id,
+          b.bigquery_committed_use_discounts_dataset_id,
+        ] : did == "" || can(regex("^([^:.]+:)?[^:.]+(\\.[^:.]+)?$", did))
+      ])
+    ])
+    error_message = "BigQuery dataset ID fields must be empty or in one of these formats: 'dataset_id', 'project_id:dataset_id', 'dataset_id.table_id', or 'project_id:dataset_id.table_id'."
   }
 }
 

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.4.0] - 2026-07-13
+
+### Added
+
+- **Table/view-level BigQuery IAM grants** - Dataset ID fields in `billing_accounts` now accept an optional table suffix (`dataset_id.table_id` or `project_id:dataset_id.table_id`). When a table suffix is present, `roles/bigquery.dataViewer` is granted only on that specific table or view (via `google_bigquery_table_iam_member`) instead of the whole dataset. Dataset-level grants (`dataset_id` or `project_id:dataset_id`) continue to work unchanged and are inherited by all tables and views in the dataset.
+- **`nops_bigquery_table_iam_roles_granted` output** - Lists table/view-level IAM roles granted
+- **Validation for dataset ID fields** - Dataset ID fields must match one of the four supported formats
+
 ## [3.3.0] - 2026-05-23
 
 ### Removed
